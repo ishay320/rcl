@@ -39,9 +39,10 @@ void test_ll_remove_next_middle(void) {
     node_i_s c = {.data = 3};
     ll_insert_next(&a, &b);
     ll_insert_next(&b, &c);
-    ll_remove_next(&a);
+    node_i_s* n = ll_remove_next(&a);
     assert(a.next == &c);
     assert(a.next->data == 3);
+    assert(&b == n);
 }
 
 void test_ll_remove_next_last(void) {

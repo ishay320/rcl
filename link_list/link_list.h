@@ -3,10 +3,6 @@ Node type prefixes:
   ll - singly linked list: next only
 */
 
-// TODO: make it so it will be definite that its not copy but by pointer, probably convert the nodes to pointer at the macro input
-
-// maybe make it use functions and the macro will check for type safety at static time and also pass to the function the offsetof(next)
-
 /**
  * @brief Link base to node (insert node after base)
  *
@@ -32,12 +28,14 @@ Node type prefixes:
  *
  * @note Cannot delete a node without its predecessor; asserts next != NULL
  * @param node The predecessor node (pointer)
+ * @return The node that was removed from the link list
  */
-// TODO: make sure that the next gets freed
-#define ll_remove_next(node)               \
-    ({                                     \
-        assert((node)->next != NULL);      \
-        (node)->next = (node)->next->next; \
+#define ll_remove_next(node)                         \
+    ({                                               \
+        assert((node)->next != NULL);                \
+        typeof((node)->next) n = (node)->next;       \
+        (node)->next           = (node)->next->next; \
+        n;                                           \
     })
 
 /**
