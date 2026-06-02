@@ -1,10 +1,8 @@
-# Multiple Small Libraries
+# Reusable C Libraries
 
 This repo contains my standard libraries in c that help me not write everything from scratch every time because c...
 
 ---
-
-Reusable C libraries:
 
 ## Array (Dynamic)
 
