@@ -1,5 +1,5 @@
 CFLAGS       = -Wall -Wextra -g -Werror=extra -fsanitize=address,undefined
-TESTS        = graph header_array dynamic_array dynamic_stack link_list queue_a queue_ll queue_ll_direct
+TESTS        = graph header_array dynamic_array dynamic_stack link_list queue_a queue_ll queue_ll_direct string_view
 INCLUDE_DIRS = . arrays queue stack link_list
 INCLUDES     = $(addprefix -I, $(INCLUDE_DIRS))
 
@@ -8,7 +8,7 @@ TESTS_BIN = $(addprefix $(BUILD_DIR)/, $(TESTS))
 DEPS      = $(addsuffix .d, $(TESTS_BIN))
 
 test: $(TESTS_BIN)
-	$(foreach t,$(TESTS_BIN),./$(t); echo;)
+	$(foreach t,$(TESTS_BIN),./$(t) && echo || exit 1;)
 
 all: $(TESTS_BIN)
 
