@@ -1,3 +1,4 @@
+#define STRING_VIEW_IMPLEMENTATION
 #include "string/string_view.h"
 
 #include <assert.h>
