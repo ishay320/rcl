@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define HEADER_ARRAY_IMPLEMENTATION
 #include "header_array.h"
 
 // Graph base on arrays:

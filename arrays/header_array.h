@@ -10,77 +10,83 @@
 #include <string.h>
 
 /**
- * Simple dynamic array implementation in C.
+ * Single-header dynamic array library.
+ *
+ * A type-safe growable array. The returned pointer is the data buffer directly,
+ * so `arr[i]` works as expected. Metadata lives in a hidden header before the pointer.
  *
  * Usage:
- * 1. Initialize with `array_init(type)` or `array_init_sized(type, size)`.
- * 2. Add elements using `array_push()` or `array_push_rval()`.
- * 3. Access elements with `array[x]` and get the size using
- * `array_size(array)`.
- * 4. Free memory with `array_free(array)`.
+ *   #define HEADER_ARRAY_IMPLEMENTATION
+ *   #include "header_array.h"
  *
  * Example:
  *
- * int* arr = array_init(int);
- * array_push_rval(arr, 42);
- * printf("%d\n", arr[0]);
- * array_free(arr);
+ *   int* arr = array_init(int);
+ *   array_push_rval(arr, 42);
+ *   printf("%d\n", arr[0]);
+ *   array_free(arr);
  */
 
+/**
+ * @brief Internal header stored before the data pointer.
+ *
+ * Users never access this directly; use the macro API instead.
+ */
 struct array {
-    size_t len;
-    size_t cap;
-    size_t stride;
+    size_t len;    /**< Number of elements currently stored. */
+    size_t cap;    /**< Allocated capacity in elements. */
+    size_t stride; /**< Size in bytes of each element. */
 
-    uint8_t data[];
+    uint8_t data[]; /**< Data buffer; the pointer returned to the user points here. */
 };
 
-#ifndef MSL_INLINE
-#define MSL_INLINE static inline
+#ifndef RCL_INLINE
+#define RCL_INLINE static inline
 #endif
 
 #define ARRAY_HEADER_SIZE (sizeof(size_t) * 3)
 
 /**
- * Initialisation of the dynamic array
+ * @brief Initialise a dynamic array for the given element type.
  *
- * @param type is the array to init.
- * @return type* of the new array.
+ * @param type Element type (e.g. int, MyStruct).
+ * @return type* pointer to the new array, or NULL on allocation failure.
  */
 #define array_init(type) (type*)f_array_init(sizeof(type), 1)
 
 /**
- * Initialisation of the dynamic array with an starting size
+ * @brief Initialise a dynamic array with a pre-allocated capacity.
  *
- * @param type is the array to init.
- * @param size is the number of elements that the array will start with.
- * @return type* of the new array.
+ * @param type Element type (e.g. int, MyStruct).
+ * @param size Initial capacity in number of elements.
+ * @return type* pointer to the new array, or NULL on allocation failure.
  */
 #define array_init_sized(type, size) (type*)f_array_init(sizeof(type), size)
 
 /**
- * Free the dynamic array
+ * @brief Free the dynamic array.
  *
- * @param array is the array to free.
+ * @param array Pointer to the array.
  */
-MSL_INLINE void array_free(void* array);
+RCL_INLINE void array_free(void* array);
 
 /**
- * Push an element to the array
+ * @brief Push an lvalue element onto the array.
  *
- * @param array is the array to push to.
- * @param element is the element to push into the array.
- * @return bool of if pushed successfully.
+ * @param array Array to push to.
+ * @param element Lvalue element to push (address is taken internally).
+ * @return bool true on success, false on allocation failure.
  */
 #define array_push(array, element) f_array_push((void**)&array, &element)
 
 /**
- * Push an r value element to the array
- * - r value is element without memory example: 1 + 3
+ * @brief Push an rvalue element onto the array.
  *
- * @param array is the array to push to.
- * @param element is the element to push into the array.
- * @return bool of if pushed successfully.
+ * Accepts temporaries and literals (e.g. `array_push_rval(arr, 1 + 3)`).
+ *
+ * @param array Array to push to.
+ * @param element Rvalue element to push.
+ * @return bool true on success, false on allocation failure.
  */
 #define array_push_rval(array, element)          \
     ({                                           \
@@ -88,34 +94,74 @@ MSL_INLINE void array_free(void* array);
         array_push((array), __tmp_value);        \
     })
 
-/**
- * Get the header from the array pointer
- *
- * @param a is the array.
- * @return header of the array
- */
+/** @internal Recover the array header from a data pointer. */
 #define array_get_header(a) ((struct array*)((uint8_t*)(a) - ARRAY_HEADER_SIZE))
 
 /**
- * Reserves space in the array, if the array is bigger then the reserve size, it
- * wont do nothing
+ * @brief Reserve capacity without changing length.
  *
- * @param array is the array to reserve.
- * @param reserve is the size to reserve.
- * @return bool of if reserved successfully.
+ * No-op if current capacity already meets or exceeds `reserve`.
+ *
+ * @param array Array to reserve space in.
+ * @param reserve Minimum capacity in number of elements.
+ * @return bool true on success, false on allocation failure.
  */
 #define array_reserve(array, reserve) f_array_reserve((void**)(&array), reserve)
 
 /**
- * Resize space in the array, it can make the array smaller or bigger
+ * @brief Resize the array capacity to an exact size.
  *
- * @param array is the array to reserve.
- * @param resize is the size to resize to.
- * @return bool of if resized successfully.
+ * Can grow or shrink. If shrinking below current length, length is clamped to new capacity.
+ *
+ * @param array Array to resize.
+ * @param resize New capacity in number of elements.
+ * @return bool true on success, false on allocation failure.
  */
 #define array_resize(array, resize) f_array_resize((void**)(&array), resize)
 
-MSL_INLINE void* f_array_init(size_t stride, size_t cap) {
+RCL_INLINE void* f_array_init(size_t stride, size_t cap);
+
+RCL_INLINE bool f_array_resize(void** array, size_t size);
+
+RCL_INLINE bool f_array_reserve(void** array, size_t size);
+
+RCL_INLINE bool f_array_push(void** array, void* element);
+
+/**
+ * @brief Remove an element by index (order-preserving via memmove).
+ *
+ * @param array Pointer to the array.
+ * @param index Index of the element to remove. Must be < array_len(array).
+ */
+RCL_INLINE void array_remove_index(void* array, size_t index);
+
+/**
+ * @brief Get the allocated capacity of the array.
+ *
+ * @param array Pointer to the array.
+ * @return Capacity in number of elements.
+ */
+RCL_INLINE size_t array_cap(void* array);
+
+/**
+ * @brief Get the number of elements currently in the array.
+ *
+ * @param array Pointer to the array.
+ * @return Number of elements stored.
+ */
+RCL_INLINE size_t array_len(void* array);
+
+/**
+ * @brief Get the size in bytes of each element.
+ *
+ * @param array Pointer to the array.
+ * @return Element size in bytes.
+ */
+RCL_INLINE size_t array_stride(void* array);
+
+#ifdef HEADER_ARRAY_IMPLEMENTATION
+
+RCL_INLINE void* f_array_init(size_t stride, size_t cap) {
     struct array* header = malloc(ARRAY_HEADER_SIZE + (stride * cap));
     if (!header) {
         perror("could not create dynamic array");
@@ -129,13 +175,13 @@ MSL_INLINE void* f_array_init(size_t stride, size_t cap) {
     return header->data;
 }
 
-MSL_INLINE void array_free(void* array) {
+RCL_INLINE void array_free(void* array) {
     assert(array);
     struct array* header = array_get_header(array);
     free(header);
 }
 
-MSL_INLINE bool f_array_resize(void** array, size_t size) {
+RCL_INLINE bool f_array_resize(void** array, size_t size) {
     assert(*array);
     struct array* header = array_get_header(*array);
     void* new_ptr        = realloc(header, size * header->stride + ARRAY_HEADER_SIZE);
@@ -155,7 +201,7 @@ MSL_INLINE bool f_array_resize(void** array, size_t size) {
     return true;
 }
 
-MSL_INLINE bool f_array_reserve(void** array, size_t size) {
+RCL_INLINE bool f_array_reserve(void** array, size_t size) {
     assert(*array);
     struct array* header = array_get_header(*array);
     if (header->cap >= size) {
@@ -165,7 +211,7 @@ MSL_INLINE bool f_array_reserve(void** array, size_t size) {
     return f_array_resize(array, size);
 }
 
-MSL_INLINE bool f_array_push(void** array, void* element) {
+RCL_INLINE bool f_array_push(void** array, void* element) {
     assert(*array);
     struct array* header = array_get_header(*array);
     if (__builtin_expect(header->len == header->cap, 0)) {
@@ -182,13 +228,7 @@ MSL_INLINE bool f_array_push(void** array, void* element) {
     return true;
 }
 
-/**
- * Remove from the array using index
- *
- * @param array pointer to the array.
- * @param index at the position to remove
- */
-MSL_INLINE void array_remove_index(void* array, size_t index) {
+RCL_INLINE void array_remove_index(void* array, size_t index) {
     assert(array);
     struct array* header = array_get_header(array);
     assert(header->len > index);
@@ -197,40 +237,23 @@ MSL_INLINE void array_remove_index(void* array, size_t index) {
     header->len--;
 }
 
-/**
- * Get the capacity of the array.
- *
- * @param array pointer to the array.
- * @return The capacity of the array.
- */
-MSL_INLINE size_t array_cap(void* array) {
+RCL_INLINE size_t array_cap(void* array) {
     assert(array);
     struct array* header = array_get_header(array);
     return header->cap;
 }
 
-/**
- * Get the length of the array.
- *
- * @param array pointer to the array.
- * @return The number of elements currently in the array.
- */
-MSL_INLINE size_t array_len(void* array) {
+RCL_INLINE size_t array_len(void* array) {
     assert(array);
     struct array* header = array_get_header(array);
     return header->len;
 }
 
-/**
- * Get the stride (size of each element) of the dynamic array.
- *
- * @param array pointer to the dynamic array.
- * @return The size in bytes of each element in the array.
- */
-MSL_INLINE size_t array_stride(void* array) {
+RCL_INLINE size_t array_stride(void* array) {
     assert(array);
     struct array* header = array_get_header(array);
     return header->stride;
 }
 
+#endif  // HEADER_ARRAY_IMPLEMENTATION
 #endif  // HEADER_ARRAY_H

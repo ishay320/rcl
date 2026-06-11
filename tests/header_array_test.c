@@ -1,3 +1,4 @@
+#define HEADER_ARRAY_IMPLEMENTATION
 #include "arrays/header_array.h"
 
 #include <assert.h>
