@@ -1,6 +1,12 @@
 /*
 Node type prefixes:
   ll - singly linked list: next only
+How to use:
+define a struct with a pointer to the next node as the last member:
+    struct node {
+        int value;
+        struct node* next;
+    };
 */
 
 /**

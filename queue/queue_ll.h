@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "link_list/link_list.h"
+#include "../link_list/link_list.h"
 
 /*
  * Generic linked-list queue via macros and header.
@@ -33,6 +33,24 @@ typedef struct {
 } queue;
 
 /**
+ * @brief Allocate a queue header and return a pointer to the embedded first-node slot
+ *
+ * @param T The user's node type
+ * @return Pointer to the embedded T slot inside the header, or NULL on allocation failure
+ */
+#define qe_init_header(T)                                      \
+    ({                                                         \
+        T* _ret        = NULL;                                 \
+        queue* _header = calloc(1, sizeof(T) + sizeof(queue)); \
+        if (_header == NULL) {                                 \
+            fprintf(stderr, "Memory allocation failed!\n");    \
+        } else {                                               \
+            _ret = (T*)(_header->data);                        \
+        }                                                      \
+        _ret;                                                  \
+    })
+
+/**
  * @brief Push a new node to the back of the queue
  *
  * @param q Pointer to the base queue node (returned by qe_init_header)
@@ -53,7 +71,7 @@ typedef struct {
                 _header->back  = new_node;                  \
                 _header->front = new_node;                  \
             } else {                                        \
-                struct node* back = _header->back;          \
+                typeof(q) back = _header->back;             \
                 ll_insert_next(back, new_node);             \
                 _header->back = new_node;                   \
             }                                               \
@@ -175,24 +193,6 @@ typedef struct {
     })
 
 /**
- * @brief Allocate a queue header and return a pointer to the embedded first-node slot
- *
- * @param T The user's node type
- * @return Pointer to the embedded T slot inside the header, or NULL on allocation failure
- */
-#define qe_init_header(T)                                      \
-    ({                                                         \
-        T* _ret        = NULL;                                 \
-        queue* _header = calloc(1, sizeof(T) + sizeof(queue)); \
-        if (_header == NULL) {                                 \
-            fprintf(stderr, "Memory allocation failed!\n");    \
-        } else {                                               \
-            _ret = (T*)(_header->data);                        \
-        }                                                      \
-        _ret;                                                  \
-    })
-
-/**
  * @brief Recover the queue header pointer from any node pointer in the queue
  *
  * @note Relies on the node being the embedded slot inside the header allocation
@@ -218,5 +218,13 @@ typedef struct {
         }                           \
         q = NULL;                   \
     })
+
+/**
+ * @brief Iterate over all nodes in the queue without modifying it
+ *
+ * @param q Pointer to the base queue node (returned by qe_init_header)
+ * @param i_name Name of the iterator variable
+ */
+#define qe_for_each(q, i_name) for (typeof(*q)* i_name = (typeof(q))qe_front_node(q); i_name != NULL; i_name = i_name->next)
 
 #endif  // QUEUE_LL_H

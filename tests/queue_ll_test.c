@@ -234,6 +234,28 @@ void test_qe_clear(void) {
     qe_destroy_header(q);
 }
 
+void test_qe_for_each(void) {
+    node* q    = qe_init_header(node);
+    int vals[] = {10, 20, 30};
+    for (int i = 0; i < 3; i++) qe_push(q, vals[i]);
+    int i = 0;
+    qe_for_each(q, it) { assert(it->data == vals[i++]); }
+    assert(i == 3);
+    qe_clear(q);
+    qe_destroy_header(q);
+}
+
+void test_qe_for_each_empty(void) {
+    node* q   = qe_init_header(node);
+    int count = 0;
+    qe_for_each(q, it) {
+        (void)it;
+        count++;
+    }
+    assert(count == 0);
+    qe_destroy_header(q);
+}
+
 void test_qe_double_clear(void) {
     node* q = qe_init_header(node);
     int v   = 0;
@@ -264,6 +286,8 @@ int main(void) {
     RUN(test_qe_is_empty);
     RUN(test_qe_size);
     RUN(test_qe_clear);
+    RUN(test_qe_for_each);
+    RUN(test_qe_for_each_empty);
     RUN(test_qe_double_clear);
     SUMMERY;
     return 0;

@@ -8,7 +8,8 @@ TESTS_BIN = $(addprefix $(BUILD_DIR)/, $(TESTS))
 DEPS      = $(addsuffix .d, $(TESTS_BIN))
 
 test: $(TESTS_BIN)
-	$(foreach t,$(TESTS_BIN),./$(t) && echo || exit 1;)
+	@$(foreach t,$(TESTS_BIN),./$(t) && echo || exit 1;)
+	@echo "All tests passed!"
 
 all: $(TESTS_BIN)
 

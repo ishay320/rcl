@@ -13,8 +13,18 @@
  *   typedef struct my_node { struct my_node* next; int data; } my_node;
  *   typedef struct { my_node* front; my_node* back; int size; } my_queue;
  *   my_queue q = {0};
+ *   qd_push(&q, 42);
+ *   int value;
+ *   qd_pop(&q, &value);
  */
 
+/**
+ * @brief Push a new node to the back of the queue
+ *
+ * @param q Pointer to the queue
+ * @param d The data value to be pushed into the queue
+ * @return true if the node was allocated and pushed successfully, false on allocation failure
+ */
 #define qd_push(q, d)                                           \
     ({                                                          \
         bool __ret                = false;                      \
@@ -37,6 +47,13 @@
         __ret;                                                  \
     })
 
+/**
+ * @brief Pop the front node from the queue
+ *
+ * @param q Pointer to the queue
+ * @param out Variable to store the popped front node's data
+ * @return true if an node was popped successfully, false if the queue is empty
+ */
 #define qd_pop(q, out)                                \
     ({                                                \
         bool __ret = false;                           \
@@ -52,21 +69,53 @@
         __ret;                                        \
     })
 
+/**
+ * @brief Get the data of the front node without removing it
+ *
+ * @param q Pointer to the queue
+ * @param out Variable to store the front node's data
+ * @return Pointer to the front node, or NULL if the queue is empty
+ */
 #define qd_front(q, out)                          \
     ({                                            \
         if ((q)->front) (out) = (q)->front->data; \
         (q)->front;                               \
     })
 
+/**
+ * @brief Get the data of the back node without removing it
+ *
+ * @param q Pointer to the queue
+ * @param out Variable to store the back node's data
+ * @return Pointer to the back node, or NULL if the queue is empty
+ */
 #define qd_back(q, out)                         \
     ({                                          \
         if ((q)->back) (out) = (q)->back->data; \
         (q)->back;                              \
     })
 
+/**
+ * @brief Check if the queue is empty
+ *
+ * @param q Pointer to the queue
+ * @return true if the queue is empty, false otherwise
+ */
 #define qd_is_empty(q) ((q)->front == NULL)
+
+/**
+ * @brief Get the size of the queue
+ *
+ * @param q Pointer to the queue
+ * @return The number of elements in the queue
+ */
 #define qd_size(q) ((q)->size)
 
+/**
+ * @brief Clear all elements from the queue
+ *
+ * @param q Pointer to the queue
+ */
 #define qd_clear(q)                              \
     ({                                           \
         while ((q)->front != NULL) {             \
