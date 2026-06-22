@@ -35,4 +35,7 @@ coverage: rm
 rm:
 	rm -rf $(BUILD_DIR) $(COV_DIR)
 
+%_test: $(BUILD_DIR)/%
+	./$<
+
 .PHONY: all test rm coverage
