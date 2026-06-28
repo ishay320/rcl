@@ -1,3 +1,5 @@
+// FIXME: right now, the use of the main node is only for typechecking and its
+// confusing
 #ifndef QUEUE_LL_H
 #define QUEUE_LL_H
 
@@ -33,10 +35,12 @@ typedef struct {
 } queue;
 
 /**
- * @brief Allocate a queue header and return a pointer to the embedded first-node slot
+ * @brief Allocate a queue header and return a pointer to the embedded
+ * first-node slot
  *
  * @param T The user's node type
- * @return Pointer to the embedded T slot inside the header, or NULL on allocation failure
+ * @return Pointer to the embedded T slot inside the header, or NULL on
+ * allocation failure
  */
 #define qe_init_header(T)                                      \
     ({                                                         \
@@ -54,8 +58,10 @@ typedef struct {
  * @brief Push a new node to the back of the queue
  *
  * @param q Pointer to the base queue node (returned by qe_init_header)
- * @param d The data value to be pushed into the queue (assigned to the new node's data field)
- * @return true if the node was allocated and pushed successfully, false on allocation failure
+ * @param d The data value to be pushed into the queue (assigned to the new
+ * node's data field)
+ * @return true if the node was allocated and pushed successfully, false on
+ * allocation failure
  */
 #define qe_push(q, d)                                       \
     ({                                                      \
@@ -107,7 +113,8 @@ typedef struct {
  * @brief Peek at the front node without removing it
  *
  * @param q Pointer to the base queue node (returned by qe_init_header)
- * @param out Variable to store the front node's data (only written if queue is not empty)
+ * @param out Variable to store the front node's data (only written if queue is
+ * not empty)
  * @return Pointer to the front node, or NULL if the queue is empty
  */
 #define qe_front(q, out)                                 \
@@ -135,7 +142,8 @@ typedef struct {
  * @brief Peek at the back node without removing it
  *
  * @param q Pointer to the base queue node (returned by qe_init_header)
- * @param out Variable to store the back node's data (only written if queue is not empty)
+ * @param out Variable to store the back node's data (only written if queue is
+ * not empty)
  * @return Pointer to the back node, or NULL if the queue is empty
  */
 #define qe_back(q, out)                                 \

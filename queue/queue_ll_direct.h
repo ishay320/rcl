@@ -7,23 +7,47 @@
 
 /*
  * Direct linked-list queue. No hidden header allocation.
- * User declares a node struct with `next` and `data`, and a queue struct
- * with `front`, `back`, `size`. Supports zero-initialization (= {0}).
+ * Use QUEUE_DEFINE to declare both node and queue types, then zero-init:
  *
- *   typedef struct my_node { struct my_node* next; int data; } my_node;
- *   typedef struct { my_node* front; my_node* back; int size; } my_queue;
- *   my_queue q = {0};
+ *   QUEUE_DEFINE(my_node, int);
+ *   my_node_queue q = {0};
  *   qd_push(&q, 42);
  *   int value;
  *   qd_pop(&q, &value);
+ *
+ * Or declare manually:
+ *   typedef struct my_node { struct my_node* next; int data; } my_node;
+ *   typedef struct { my_node* front; my_node* back; int size; } my_node_queue;
  */
+
+/**
+ * @brief Declare a linked-list node type and its matching queue type, it
+ * creates node with name: T and queue with name: T_q
+ *
+ * @param T    Name for the node type (also used as prefix: T_queue)
+ * @param D    Type of the data field stored in each node
+ *
+ * @note You can create it yourself and expand it, but this macro is provided
+ * for convenience and to avoid mistakes
+ */
+#define QD_QUEUE_DEFINE(T, D) \
+    typedef struct T {        \
+        struct T* next;       \
+        D data;               \
+    } T;                      \
+    typedef struct {          \
+        T* front;             \
+        T* back;              \
+        int size;             \
+    } T##_q
 
 /**
  * @brief Push a new node to the back of the queue
  *
  * @param q Pointer to the queue
  * @param d The data value to be pushed into the queue
- * @return true if the node was allocated and pushed successfully, false on allocation failure
+ * @return true if the node was allocated and pushed successfully, false on
+ * allocation failure
  */
 #define qd_push(q, d)                                           \
     ({                                                          \
