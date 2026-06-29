@@ -13,6 +13,8 @@
  *   const char* s = sb_get_string(sb);  // points into sb, do NOT free()
  *   ...
  *   sb_destroy(sb); // frees also the get_string() buffer
+ *
+ * Note: this implementation is slow in the init faze but fast in the append
  */
 #include <stdarg.h>
 #include <stdio.h>

@@ -10,6 +10,9 @@
  *   const char* s = sb_get_string(sb);  // caller owns, must free()
  *   ...
  *   sb_destroy(sb);
+ *
+ * Note: this implementation is fast in the init faze but slow in the append faze,
+ * because it allocates a new node for each appended string segment.
  */
 
 #include <assert.h>
