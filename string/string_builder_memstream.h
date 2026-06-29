@@ -14,9 +14,11 @@
  *   ...
  *   sb_destroy(sb); // frees also the get_string() buffer
  *
- * Note: this implementation is slow in the init faze but fast in the append
+ * Note: this implementation is slow in the init faze but fast in the append faze,
+ * because it uses a kernel-managed buffer that grows automatically.
  */
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,8 +45,10 @@ sb_memstream* sb_create(void);
  *
  * @param s   The string builder.
  * @param str Null-terminated string to append.
+ *
+ * @return true on success, false on allocation failure.
  */
-void sb_append(sb_memstream* s, const char* str);
+bool sb_append(sb_memstream* s, const char* str);
 
 /**
  * @brief Append a printf-style formatted string to the builder.
@@ -52,8 +56,10 @@ void sb_append(sb_memstream* s, const char* str);
  * @param s      The string builder.
  * @param format printf format string.
  * @param ...    Format arguments.
+ *
+ * @return true on success, false on allocation failure.
  */
-void sb_fappend(sb_memstream* s, const char* format, ...);
+bool sb_fappend(sb_memstream* s, const char* format, ...);
 
 /**
  * @brief Flush and return the current buffer contents.
@@ -88,13 +94,14 @@ sb_memstream* sb_create(void) {
     return s;
 }
 
-void sb_append(sb_memstream* s, const char* str) { fprintf(s->sb, "%s", str); }
+bool sb_append(sb_memstream* s, const char* str) { return fprintf(s->sb, "%s", str) >= 0; }
 
-void sb_fappend(sb_memstream* s, const char* format, ...) {
+bool sb_fappend(sb_memstream* s, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    vfprintf(s->sb, format, args);
+    int r = vfprintf(s->sb, format, args);
     va_end(args);
+    return (r >= 0);
 }
 
 const char* sb_get_string(const sb_memstream* s) {

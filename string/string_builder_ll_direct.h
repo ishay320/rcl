@@ -151,19 +151,3 @@ void sb_destroy(string_builder* s) {
 
 #endif  // STRING_BUILDER_LL_DIRECT_IMPLEMENTATION
 #endif  // STRING_BUILDER_LL_DIRECT_H
-
-// int main(void) {
-//     string_builder* s = sb_create();
-//     if (s == NULL) return EXIT_FAILURE;
-
-//     sb_append(s, "Hello");
-//     printf("%s\n", sb_get_string(s));
-//     sb_append(s, " ");
-//     sb_append(s, "World!");
-//     printf("%s\n", sb_get_string(s));
-//     sb_fappend(s, " The answer is %d.", 42);
-//     printf("%s\n", sb_get_string(s));
-//     printf("%s\n", sb_get_string(s));
-//     sb_destroy(s);
-//     return 0;
-// }

@@ -158,6 +158,9 @@ const char* sb_get_string(const string_builder* s) {
 
 void sb_destroy(string_builder* s) {
     if (s == NULL) return;
+    qe_for_each(s->head, node) {
+        free(node->data);
+    }
     qe_destroy_header(s->head);
     free(s);
 }
