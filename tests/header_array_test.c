@@ -186,6 +186,6 @@ int main(void) {
     RUN(test_array_resize);
     RUN(test_array_reserve);
     RUN(test_array_remove_index);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

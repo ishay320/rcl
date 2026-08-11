@@ -1,5 +1,5 @@
 CFLAGS       = -Wall -Wextra -g -Werror=extra -fsanitize=address,undefined
-TESTS        = graph header_array dynamic_array dynamic_stack link_list queue_a queue_ll queue_ll_direct string_view string_builder_ll string_builder_ll_direct string_builder_memstream
+TESTS        = graph header_array dynamic_array dynamic_stack link_list queue_a queue_ll queue_ll_direct string_view string_builder_ll string_builder_ll_direct string_builder_memstream cmd
 INCLUDE_DIRS = . arrays queue stack link_list
 INCLUDES     = $(addprefix -I, $(INCLUDE_DIRS))
 
@@ -8,8 +8,9 @@ TESTS_BIN = $(addprefix $(BUILD_DIR)/, $(TESTS))
 DEPS      = $(addsuffix .d, $(TESTS_BIN))
 
 test: $(TESTS_BIN)
-	@$(foreach t,$(TESTS_BIN),./$(t) && echo || exit 1;)
-	@echo "All tests passed!"
+	@declare num_passed=0; 
+	@$(foreach t,$(TESTS_BIN),./$(t) && num_passed=$$((num_passed+1)) || exit 1;) \
+	echo "$$num_passed/$(words $(TESTS_BIN)) tests passed!"
 
 all: $(TESTS_BIN)
 
@@ -17,7 +18,7 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 $(BUILD_DIR)/%: tests/%_test.c | $(BUILD_DIR)
-	cc $(CFLAGS) $(INCLUDES) -MMD -MP $< -o $@ -ggdb3
+	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP $< -o $@ -ggdb3
 
 -include $(DEPS)
 
@@ -27,8 +28,8 @@ coverage: CFLAGS = -Wall -Wextra -g --coverage
 coverage: rm
 	mkdir -p $(BUILD_DIR) $(COV_DIR)
 	$(foreach t,$(TESTS), \
-		cc $(CFLAGS) $(INCLUDES) -c tests/$(t)_test.c -o $(BUILD_DIR)/$(t)_test.o && \
-		cc --coverage $(BUILD_DIR)/$(t)_test.o -o $(BUILD_DIR)/$(t);)
+		$(CC) $(CFLAGS) $(INCLUDES) -c tests/$(t)_test.c -o $(BUILD_DIR)/$(t)_test.o && \
+		$(CC) --coverage $(BUILD_DIR)/$(t)_test.o -o $(BUILD_DIR)/$(t);)
 	$(foreach t,$(TESTS_BIN),./$(t);)
 	cd $(COV_DIR) && gcov --object-directory ../$(BUILD_DIR) $(addprefix ../,$(wildcard tests/*_test.c))
 

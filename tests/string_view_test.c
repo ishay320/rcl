@@ -117,6 +117,6 @@ int main(void) {
     RUN(test_sv_ends_with);
     RUN(test_sv_copy);
     RUN(test_sv_compare);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

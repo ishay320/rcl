@@ -152,6 +152,6 @@ int main(void) {
     RUN(test_graph_node_find);
     RUN(test_graph_edge_creation_memory_safety);
     RUN(test_graph_node_edges_get);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

@@ -246,6 +246,6 @@ int main(void) {
     RUN(test_qd_size);
     RUN(test_qd_clear);
     RUN(test_qd_double_clear);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

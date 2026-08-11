@@ -148,6 +148,6 @@ int main(void) {
     RUN(test_ll_insert_tail_deep);
     RUN(test_ll_for_each);
     RUN(test_ll_free);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

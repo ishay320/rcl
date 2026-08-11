@@ -90,6 +90,6 @@ int main(void) {
     RUN(test_sb_empty);
     RUN(test_sb_append_empty_string);
     RUN(test_sb_destroy_null);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

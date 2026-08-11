@@ -289,6 +289,6 @@ int main(void) {
     RUN(test_qe_for_each);
     RUN(test_qe_for_each_empty);
     RUN(test_qe_double_clear);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

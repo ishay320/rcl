@@ -113,6 +113,6 @@ int main(void) {
     RUN(test_ds_push_many);
     RUN(test_ds_size);
     RUN(test_ds_reuse_after_empty);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

@@ -7,6 +7,9 @@
  * sb_get_string() flushes and returns the internal buffer - do NOT free() it,
  * the buffer is invalidated after sb_destroy():
  *
+ *   #define STRING_BUILDER_MEMSTREAM_IMPLEMENTATION
+ *   #include "string/string_builder_memstream.h"
+ *
  *   sb_memstream* sb = sb_create();
  *   sb_append(sb, "hello, ");
  *   sb_fappend(sb, "world %d", 42);

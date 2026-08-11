@@ -199,6 +199,6 @@ int main(void) {
     RUN(test_qa_pop_empty);
     RUN(test_qa_front_back_empty);
     RUN(test_qa_big_struct);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }

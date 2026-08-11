@@ -132,6 +132,6 @@ int main(void) {
     RUN(test_da_i_capacity_growth);
     RUN(test_da_i_boundary_values);
     RUN(test_da_i_reserve);
-    SUMMERY;
+    END_SUITE;
     return 0;
 }
