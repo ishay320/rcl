@@ -22,9 +22,9 @@
 The work order is like that:
 1. #define CMD_IMPLEMENTATION
 2. #include "cmd.h"
-3. create cmd builder
+3. create cmd_builder
 4. append commands
-5. run command -> get proc
+5. run command -> get cmd_proc
 6. can destroy cmd / reuse
 7. get in|out|error from proc
 8. reap / kill / do whatever - `cmd_destroy` kill and reap and frees the pipes
@@ -209,13 +209,16 @@ error: {
 
 void cmd__proc_fd_close(cmd_proc* proc) {
     close(proc->p_stdout[0]);
+    proc->p_stdout[0] = -1;
     close(proc->p_stderr[0]);
+    proc->p_stderr[0] = -1;
     close(proc->p_stdin[1]);
+    proc->p_stdin[1] = -1;
 }
 
 // kill if running, reap if exited, close fds
 void cmd_destroy(cmd_proc* proc) {
-    if (proc->_reaped) {
+    if (proc->_reaped || (proc->pid == 0)) {
         return;
     }
 

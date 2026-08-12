@@ -2,6 +2,8 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "test_suite.h"
 
@@ -15,6 +17,11 @@ typedef struct {
     size_t capacity;
     void** data;
 } da_p;
+typedef struct {
+    size_t size;
+    size_t capacity;
+    char** data;
+} da_s;
 
 void test_da_i_append(void) {
     da_i arr   = {0};
@@ -24,6 +31,17 @@ void test_da_i_append(void) {
     assert(arr.size == 5);
     assert(arr.capacity >= 5);
     for (int i = 0; i < 5; i++) assert(arr.data[i] == vals[i]);
+
+    da_destroy(&arr);
+}
+
+void test_da_s_append_counting(void) {
+    da_s arr = {0};
+    assert(da_append(arr, "test one size"));
+
+    assert(arr.size == 1);
+    assert(arr.capacity >= 1);
+    assert(strcmp(arr.data[0], "test one size") == 0);
 
     da_destroy(&arr);
 }
@@ -124,6 +142,7 @@ void test_da_i_reserve(void) {
 int main(void) {
     START_SUITE;
     RUN(test_da_i_append);
+    RUN(test_da_s_append_counting);
     RUN(test_da_i_double_destroy);
     RUN(test_da_p_empty);
     RUN(test_da_p_append);
