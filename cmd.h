@@ -350,6 +350,7 @@ bool cmd_wait(cmd_proc* proc, int* status, ssize_t timeout_ms) {
         ret = false;
     }
     close(fd);
+    cmd_reap(proc, status);
     return ret;
 }
 
