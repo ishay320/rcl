@@ -184,18 +184,20 @@ void test_spawn_procs_together_io(void) {
     memset(procs, 0, count * sizeof(*procs));
     for (int i = 0; i < count; ++i) {
         cmd_builder cmd = {0};
-        char arg[6];
-        sprintf(arg, "%d", i);
-        ASSERT_TRUE(cmd_append(&cmd, "echo"), "failed to append");
-        ASSERT_TRUE(cmd_append(&cmd, arg), "failed to append");
+        ASSERT_TRUE(cmd_append(&cmd, "cat"), "failed to append");
         ASSERT_TRUE(cmd_spawn(cmd, &procs[i]), "spawn true");
         cmd_builder_destroy(&cmd);
+    }
+    for (int i = 0; i < count; ++i) {
+        char arg[6];
+        int len = sprintf(arg, "%d", i);
+        cmd_write(procs[i], arg, len);
     }
     for (int i = 0; i < count; ++i) {
         char buffer[32];
         cmd_read(procs[i], buffer, 32, 20);
         char test_buffer[8];
-        sprintf(test_buffer, "%d\n", i);
+        sprintf(test_buffer, "%d", i);
         ASSERT_TRUE(strcmp(buffer, test_buffer) == 0, "str io not match");
         cmd_destroy(&procs[i]);
     }

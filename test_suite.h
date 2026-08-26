@@ -10,19 +10,19 @@ static clock_t s_cpu_start = 0;
 struct timespec s_wall_start;
 static size_t s_tests_run = 0;
 
-#define ASSERT_TRUE(result, message)                                                                                  \
-    do {                                                                                                              \
-        if (!(result)) {                                                                                              \
-            printf(AN_RED "%s:%d FAIL:" AN_RESET " %s: should be true but got false\n", __FILE__, __LINE__, message); \
-            abort();                                                                                                  \
-        }                                                                                                             \
+#define ASSERT_TRUE(result, message)                                                                                                   \
+    do {                                                                                                                               \
+        if (!(result)) {                                                                                                               \
+            printf(AN_RED "%s %s:%d FAIL:" AN_RESET " %s: should be true but got false\n", __FUNCTION__, __FILE__, __LINE__, message); \
+            abort();                                                                                                                   \
+        }                                                                                                                              \
     } while (0)
-#define ASSERT_FALSE(result, message)                                                                                 \
-    do {                                                                                                              \
-        if ((result)) {                                                                                               \
-            printf(AN_RED "%s:%d FAIL:" AN_RESET " %s: should be false but got true\n", __FILE__, __LINE__, message); \
-            abort();                                                                                                  \
-        }                                                                                                             \
+#define ASSERT_FALSE(result, message)                                                                                                  \
+    do {                                                                                                                               \
+        if ((result)) {                                                                                                                \
+            printf(AN_RED "%s %s:%d FAIL:" AN_RESET " %s: should be false but got true\n", __FUNCTION__, __FILE__, __LINE__, message); \
+            abort();                                                                                                                   \
+        }                                                                                                                              \
     } while (0)
 
 void print_success(const char* test_name) {
