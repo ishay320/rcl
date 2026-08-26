@@ -1,6 +1,5 @@
 #include "stack/dynamic_stack.h"
 
-#include <assert.h>
 #include <limits.h>
 
 #include "test_suite.h"
@@ -13,11 +12,11 @@ typedef struct {
 
 void test_ds_push_and_top(void) {
     ds_i s = {0};
-    assert(ds_push(s, 10));
-    assert(ds_push(s, 20));
-    assert(ds_push(s, 30));
-    assert(ds_top(s) == 30);
-    assert(ds_size(s) == 3);
+    ASSERT_TRUE(ds_push(s, 10));
+    ASSERT_TRUE(ds_push(s, 20));
+    ASSERT_TRUE(ds_push(s, 30));
+    ASSERT_CMP(ds_top(s), 30);
+    ASSERT_CMP(ds_size(s), (size_t)3);
     ds_destroy(&s);
 }
 
@@ -27,32 +26,32 @@ void test_ds_pop_order(void) {
     for (int i = 0; i < 5; i++) ds_push(s, vals[i]);
 
     for (int i = 4; i >= 0; i--) {
-        assert(ds_top(s) == vals[i]);
+        ASSERT_CMP(ds_top(s), vals[i]);
         int v = ds_pop(s);
-        assert(v == vals[i]);
+        ASSERT_CMP(v, vals[i]);
     }
-    assert(ds_is_empty(s));
+    ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
 }
 
 void test_ds_is_empty(void) {
     ds_i s = {0};
-    assert(ds_is_empty(s));
+    ASSERT_TRUE(ds_is_empty(s));
     ds_push(s, 42);
-    assert(!ds_is_empty(s));
+    ASSERT_FALSE(ds_is_empty(s));
     (void)ds_pop(s);
-    assert(ds_is_empty(s));
+    ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
 }
 
 void test_ds_single_element(void) {
     ds_i s = {0};
-    assert(ds_push(s, 99));
-    assert(ds_size(s) == 1);
-    assert(ds_top(s) == 99);
+    ASSERT_TRUE(ds_push(s, 99));
+    ASSERT_CMP(ds_size(s), (size_t)1);
+    ASSERT_CMP(ds_top(s), 99);
     int v = ds_pop(s);
-    assert(v == 99);
-    assert(ds_is_empty(s));
+    ASSERT_CMP(v, 99);
+    ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
 }
 
@@ -61,31 +60,31 @@ void test_ds_boundary_values(void) {
     int vals[] = {0, -1, INT_MIN, INT_MAX};
     for (int i = 0; i < 4; i++) ds_push(s, vals[i]);
 
-    for (int i = 3; i >= 0; i--) assert(ds_pop(s) == vals[i]);
-    assert(ds_is_empty(s));
+    for (int i = 3; i >= 0; i--) ASSERT_CMP(ds_pop(s), vals[i]);
+    ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
 }
 
 void test_ds_push_many(void) {
     ds_i s = {0};
-    for (int i = 0; i < 100; i++) assert(ds_push(s, i));
-    assert(ds_size(s) == 100);
-    assert(ds_top(s) == 99);
-    for (int i = 99; i >= 0; i--) assert(ds_pop(s) == i);
-    assert(ds_is_empty(s));
+    for (int i = 0; i < 100; i++) ASSERT_TRUE(ds_push(s, i));
+    ASSERT_CMP(ds_size(s), (size_t)100);
+    ASSERT_CMP(ds_top(s), 99);
+    for (int i = 99; i >= 0; i--) ASSERT_CMP(ds_pop(s), i);
+    ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
 }
 
 void test_ds_size(void) {
     ds_i s = {0};
-    assert(ds_size(s) == 0);
+    ASSERT_CMP(ds_size(s), (size_t)0);
     ds_push(s, 1);
-    assert(ds_size(s) == 1);
+    ASSERT_CMP(ds_size(s), (size_t)1);
     ds_push(s, 2);
     ds_push(s, 3);
-    assert(ds_size(s) == 3);
+    ASSERT_CMP(ds_size(s), (size_t)3);
     (void)ds_pop(s);
-    assert(ds_size(s) == 2);
+    ASSERT_CMP(ds_size(s), (size_t)2);
     ds_destroy(&s);
 }
 
@@ -98,8 +97,8 @@ void test_ds_reuse_after_empty(void) {
 
     ds_push(s, 10);
     ds_push(s, 20);
-    assert(ds_size(s) == 2);
-    assert(ds_top(s) == 20);
+    ASSERT_CMP(ds_size(s), (size_t)2);
+    ASSERT_CMP(ds_top(s), 20);
     ds_destroy(&s);
 }
 

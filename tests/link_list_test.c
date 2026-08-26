@@ -1,6 +1,6 @@
 #include "link_list/link_list.h"
 
-#include <assert.h>
+#include <assert.h> /* link_list.h uses assert internally */
 #include <stdlib.h>
 
 #include "test_suite.h"
@@ -20,17 +20,17 @@ void test_ll_insert_next(void) {
     node_i_s c = {.data = 3};
     ll_insert_next(&a, &b);
     ll_insert_next(&b, &c);
-    assert(a.next == &b);
-    assert(b.next == &c);
-    assert(a.next->next->data == 3);
+    ASSERT_CMP(a.next, &b);
+    ASSERT_CMP(b.next, &c);
+    ASSERT_CMP(a.next->next->data, 3);
 }
 
 void test_ll_is_empty(void) {
     node_i_s a = {.data = 1};
-    assert(ll_is_empty(a));
+    ASSERT_TRUE(ll_is_empty(a));
     node_i_s b = {.data = 2};
     ll_insert_next(&a, &b);
-    assert(!ll_is_empty(a));
+    ASSERT_FALSE(ll_is_empty(a));
 }
 
 void test_ll_remove_next_middle(void) {
@@ -40,9 +40,9 @@ void test_ll_remove_next_middle(void) {
     ll_insert_next(&a, &b);
     ll_insert_next(&b, &c);
     node_i_s* n = ll_remove_next(&a);
-    assert(a.next == &c);
-    assert(a.next->data == 3);
-    assert(&b == n);
+    ASSERT_CMP(a.next, &c);
+    ASSERT_CMP(a.next->data, 3);
+    ASSERT_CMP(&b, n);
 }
 
 void test_ll_remove_next_last(void) {
@@ -50,17 +50,17 @@ void test_ll_remove_next_last(void) {
     node_i_s b = {.data = 2};
     ll_insert_next(&a, &b);
     ll_remove_next(&a);
-    assert(a.next == NULL);
+    ASSERT_CMP(a.next, NULL);
 }
 
 void test_ll_count(void) {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     node_i_s c = {.data = 3};
-    assert(ll_count(a) == 1);
+    ASSERT_CMP(ll_count(a), (size_t)1);
     ll_insert_next(&a, &b);
     ll_insert_next(&b, &c);
-    assert(ll_count(a) == 3);
+    ASSERT_CMP(ll_count(a), (size_t)3);
 }
 
 void test_ll_find(void) {
@@ -70,19 +70,19 @@ void test_ll_find(void) {
     ll_insert_next(&a, &b);
     ll_insert_next(&b, &c);
     node_i_s* head_found = ll_find(a, find_data_1);
-    assert(head_found == &a);
+    ASSERT_CMP(head_found, &a);
     node_i_s* found = ll_find(a, find_data_2);
-    assert(found == &b);
+    ASSERT_CMP(found, &b);
     node_i_s* not_found = ll_find(a, find_data_99);
-    assert(not_found == NULL);
+    ASSERT_CMP(not_found, NULL);
 }
 
 void test_ll_insert_tail_single(void) {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     ll_insert_tail(&a, &b);
-    assert(a.next == &b);
-    assert(b.next == NULL);
+    ASSERT_CMP(a.next, &b);
+    ASSERT_CMP(b.next, NULL);
 }
 
 void test_ll_insert_tail_chain(void) {
@@ -91,9 +91,9 @@ void test_ll_insert_tail_chain(void) {
     node_i_s c = {.data = 3};
     ll_insert_next(&a, &b);
     ll_insert_tail(&a, &c);
-    assert(a.next == &b);
-    assert(b.next == &c);
-    assert(c.next == NULL);
+    ASSERT_CMP(a.next, &b);
+    ASSERT_CMP(b.next, &c);
+    ASSERT_CMP(c.next, NULL);
 }
 
 void test_ll_insert_tail_deep(void) {
@@ -104,8 +104,8 @@ void test_ll_insert_tail_deep(void) {
     ll_insert_next(&a, &b);
     ll_insert_tail(&b, &c);
     ll_insert_tail(&a, &d);
-    assert(c.next == &d);
-    assert(d.next == NULL);
+    ASSERT_CMP(c.next, &d);
+    ASSERT_CMP(d.next, NULL);
 }
 
 void test_ll_for_each(void) {
@@ -116,7 +116,7 @@ void test_ll_for_each(void) {
     ll_insert_next(&b, &c);
     int sum = 0;
     ll_for_each(a, i) { sum += i->data; }
-    assert(sum == 6);
+    ASSERT_CMP(sum, 6);
 }
 
 void test_ll_free(void) {
@@ -127,7 +127,7 @@ void test_ll_free(void) {
         n->data     = i;
         ll_insert_tail(base, n);
     }
-    assert(ll_count(*base) == 11);
+    ASSERT_CMP(ll_count(*base), (size_t)11);
 
     for (typeof(base) cur = base, next; cur != NULL; cur = next) {
         next = cur->next;

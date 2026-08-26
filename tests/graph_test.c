@@ -1,6 +1,5 @@
 #include "graph.h"
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,10 +8,10 @@
 
 void test_graph_initialization(void) {
     struct graph* g = graph_init();
-    assert(g != NULL);
-    assert(g->nodes != NULL);
-    assert(g->edges != NULL);
-    assert(g->inc_id == 0);
+    ASSERT_TRUE(g != NULL);
+    ASSERT_TRUE(g->nodes != NULL);
+    ASSERT_TRUE(g->edges != NULL);
+    ASSERT_CMP(g->inc_id, (size_t)0);
 
     graph_free(g);
 }
@@ -24,12 +23,12 @@ void test_push_node(void) {
     size_t id1 = graph_node_push(g, p);
     size_t id2 = graph_node_push(g, p);
 
-    assert(array_len(g->nodes) == 2);
-    assert(g->nodes[0].id == id1);
-    assert(g->nodes[1].id == id2);
+    ASSERT_CMP(array_len(g->nodes), (size_t)2);
+    ASSERT_CMP(g->nodes[0].id, id1);
+    ASSERT_CMP(g->nodes[1].id, id2);
 
-    assert(g->nodes[0].data == p);
-    assert(g->nodes[1].data == p);
+    ASSERT_CMP(g->nodes[0].data, p);
+    ASSERT_CMP(g->nodes[1].data, p);
 
     graph_free(g);
     free(p);
@@ -42,14 +41,14 @@ void test_connect_nodes(void) {
     size_t id1 = graph_node_push(g, p);
     size_t id2 = graph_node_push(g, p);
 
-    assert(graph_eadge_create(g, id1, id2) == true);
-    assert(array_len(g->edges) == 1);
+    ASSERT_TRUE(graph_eadge_create(g, id1, id2));
+    ASSERT_CMP(array_len(g->edges), (size_t)1);
 
     struct edge e = g->edges[0];
-    assert(e.id_node_from == id1);
-    assert(e.id_node_to == id2);
+    ASSERT_CMP(e.id_node_from, id1);
+    ASSERT_CMP(e.id_node_to, id2);
 
-    assert(graph_eadge_create(g, id1, 999) == false);
+    ASSERT_FALSE(graph_eadge_create(g, id1, 999));
 
     graph_free(g);
     free(p);
@@ -75,16 +74,16 @@ void test_graph_node_get(void) {
     struct node_i* n1 = graph_node_get(g, id1);
     struct node_i* n2 = graph_node_get(g, id2);
 
-    assert(n1 != NULL);
-    assert(n2 != NULL);
+    ASSERT_TRUE(n1 != NULL);
+    ASSERT_TRUE(n2 != NULL);
 
-    assert(n1->id == id1);
-    assert(n2->id == id2);
+    ASSERT_CMP(n1->id, id1);
+    ASSERT_CMP(n2->id, id2);
 
-    assert(n1->data == p1);
-    assert(n2->data == p2);
+    ASSERT_CMP(n1->data, p1);
+    ASSERT_CMP(n2->data, p2);
 
-    assert(graph_node_get(g, 999) == NULL);
+    ASSERT_CMP(graph_node_get(g, 999), NULL);
 
     graph_free(g);
     free(p1);
@@ -106,8 +105,8 @@ void test_graph_node_find(void) {
 
     struct node_i* found = graph_node_find(g, node_equals);
 
-    assert(found != NULL);
-    assert(*((int*)found->data) == 42);
+    ASSERT_TRUE(found != NULL);
+    ASSERT_CMP(*((int*)found->data), 42);
 
     graph_free(g);
     free(p1);
@@ -116,8 +115,8 @@ void test_graph_node_find(void) {
 
 void test_graph_edge_creation_memory_safety(void) {
     struct graph* g = graph_init();
-    assert(graph_eadge_create(g, 1, 2) == false);
-    assert(array_len(g->edges) == 0);
+    ASSERT_FALSE(graph_eadge_create(g, 1, 2));
+    ASSERT_CMP(array_len(g->edges), (size_t)0);
 
     graph_free(g);
 }
@@ -130,13 +129,13 @@ void test_graph_node_edges_get(void) {
 
     size_t len;
     struct edge* e = graph_node_edges_get(g, node_a, &len);
-    assert(len == 0);
+    ASSERT_CMP(len, (size_t)0);
     free(e);
 
-    assert(graph_eadge_create(g, node_a, node_b) == true);
+    ASSERT_TRUE(graph_eadge_create(g, node_a, node_b));
     e = graph_node_edges_get(g, node_a, &len);
-    assert(len == 1);
-    assert(e[0].id_node_to == node_b);
+    ASSERT_CMP(len, (size_t)1);
+    ASSERT_CMP(e[0].id_node_to, node_b);
     free(e);
 
     graph_free(g);

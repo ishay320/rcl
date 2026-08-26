@@ -1,21 +1,19 @@
 #define HEADER_ARRAY_IMPLEMENTATION
 #include "arrays/header_array.h"
 
-#include <assert.h>
-
 #include "test_suite.h"
 
 void test_array_initialization(void) {
     int* arr = array_init(int);
-    assert(arr != NULL);
+    ASSERT_TRUE(arr != NULL);
     array_free(arr);
 }
 
 void test_array_init_sized(void) {
     int* arr = array_init_sized(int, 10);
-    assert(arr != NULL);
+    ASSERT_TRUE(arr != NULL);
     struct array* header = array_get_header(arr);
-    assert(header->cap == 10);
+    ASSERT_CMP(header->cap, (size_t)10);
     array_free(arr);
 }
 
@@ -23,8 +21,8 @@ void test_array_push_rval(void) {
     int* arr = array_init(int);
     array_push_rval(arr, 42);
     struct array* header = array_get_header(arr);
-    assert(header->len == 1);
-    assert(arr[0] == 42);
+    ASSERT_CMP(header->len, (size_t)1);
+    ASSERT_CMP(arr[0], 42);
     array_free(arr);
 }
 
@@ -33,8 +31,8 @@ void test_array_push(void) {
     int item = 42;
     array_push(arr, item);
     struct array* header = array_get_header(arr);
-    assert(header->len == 1);
-    assert(arr[0] == 42);
+    ASSERT_CMP(header->len, (size_t)1);
+    ASSERT_CMP(arr[0], 42);
     array_free(arr);
 }
 
@@ -44,10 +42,10 @@ void test_array_resizing_dynamicly(void) {
         array_push(arr, i);
     }
     struct array* header = array_get_header(arr);
-    assert(header->cap >= 100);
-    assert(header->len == 100);
+    ASSERT_TRUE(header->cap >= 100);
+    ASSERT_CMP(header->len, (size_t)100);
     for (int i = 0; i < 100; i++) {
-        assert(arr[i] == i);
+        ASSERT_CMP(arr[i], i);
     }
     array_free(arr);
 }
@@ -61,30 +59,30 @@ void test_array_free(void) {
 void test_array_cap(void) {
     int* arr             = array_init_sized(int, 50);
     struct array* header = array_get_header(arr);
-    assert(array_cap(arr) == header->cap);
-    assert(header->cap == 50);
+    ASSERT_CMP(array_cap(arr), header->cap);
+    ASSERT_CMP(header->cap, (size_t)50);
     array_free(arr);
 }
 
 void test_array_len(void) {
     int* arr = array_init(int);
-    assert(array_len(arr) == 0);
+    ASSERT_CMP(array_len(arr), (size_t)0);
 
     array_push_rval(arr, 42);
-    assert(array_len(arr) == 1);
+    ASSERT_CMP(array_len(arr), (size_t)1);
 
     array_push_rval(arr, 100);
-    assert(array_len(arr) == 2);
+    ASSERT_CMP(array_len(arr), (size_t)2);
 
     array_free(arr);
 }
 
 void test_array_stride(void) {
     int* int_arr = array_init(int);
-    assert(array_stride(int_arr) == sizeof(int));
+    ASSERT_CMP(array_stride(int_arr), sizeof(int));
 
     double* double_arr = array_init(double);
-    assert(array_stride(double_arr) == sizeof(double));
+    ASSERT_CMP(array_stride(double_arr), sizeof(double));
 
     array_free(int_arr);
     array_free(double_arr);
@@ -92,24 +90,24 @@ void test_array_stride(void) {
 
 void test_array_reserve(void) {
     int* array = array_init(int);
-    assert(array_reserve(array, 10));
-    assert(array_cap(array) == 10);
-    assert(array_reserve(array, 5));
-    assert(array_cap(array) == 10);
-    assert(array_reserve(array, 30));
-    assert(array_cap(array) == 30);
+    ASSERT_TRUE(array_reserve(array, 10));
+    ASSERT_CMP(array_cap(array), (size_t)10);
+    ASSERT_TRUE(array_reserve(array, 5));
+    ASSERT_CMP(array_cap(array), (size_t)10);
+    ASSERT_TRUE(array_reserve(array, 30));
+    ASSERT_CMP(array_cap(array), (size_t)30);
 
     array_free(array);
 }
 
 void test_array_resize(void) {
     int* array = array_init(int);
-    assert(array_resize(array, 10));
-    assert(array_cap(array) == 10);
-    assert(array_resize(array, 7));
-    assert(array_cap(array) == 7);
-    assert(array_resize(array, 30));
-    assert(array_cap(array) == 30);
+    ASSERT_TRUE(array_resize(array, 10));
+    ASSERT_CMP(array_cap(array), (size_t)10);
+    ASSERT_TRUE(array_resize(array, 7));
+    ASSERT_CMP(array_cap(array), (size_t)7);
+    ASSERT_TRUE(array_resize(array, 30));
+    ASSERT_CMP(array_cap(array), (size_t)30);
 
     array_free(array);
 }
@@ -124,26 +122,26 @@ void test_array_remove_index(void) {
     int* array = array_init(int);
 
     array_push_rval(array, 12);
-    assert(array_len(array) == 1);
+    ASSERT_CMP(array_len(array), (size_t)1);
     array_remove_index(array, 0);
-    assert(array_len(array) == 0);
+    ASSERT_CMP(array_len(array), (size_t)0);
 
     array_push_rval(array, 42);
     array_push_rval(array, 52);
     array_push_rval(array, 22);
-    assert(array[0] == 42);
-    assert(array_len(array) == 3);
+    ASSERT_CMP(array[0], 42);
+    ASSERT_CMP(array_len(array), (size_t)3);
 
     array_remove_index(array, 0);
-    assert(array_len(array) == 2);
-    assert(array[0] == 52);
+    ASSERT_CMP(array_len(array), (size_t)2);
+    ASSERT_CMP(array[0], 52);
 
     array_push_rval(array, 25);
-    assert(array_len(array) == 3);
-    assert(array[2] == 25);
+    ASSERT_CMP(array_len(array), (size_t)3);
+    ASSERT_CMP(array[2], 25);
     array_remove_index(array, 0);
-    assert(array[1] == 25);
-    assert(array_len(array) == 2);
+    ASSERT_CMP(array[1], 25);
+    ASSERT_CMP(array_len(array), (size_t)2);
 
     array_free(array);
 
@@ -156,18 +154,18 @@ void test_array_remove_index(void) {
     array_push(sarr, c);
 
     array_remove_index(sarr, 1);
-    assert(array_len(sarr) == 2);
-    assert(sarr[0].id == 1);
-    assert(sarr[1].id == 3);
-    assert(sarr[1].value == 3.0f);
+    ASSERT_CMP(array_len(sarr), (size_t)2);
+    ASSERT_CMP(sarr[0].id, 1);
+    ASSERT_CMP(sarr[1].id, 3);
+    ASSERT_CMP(sarr[1].value, 3.0f);
 
     array_remove_index(sarr, 0);
-    assert(array_len(sarr) == 1);
-    assert(sarr[0].id == 3);
-    assert(sarr[0].value == 3.0f);
+    ASSERT_CMP(array_len(sarr), (size_t)1);
+    ASSERT_CMP(sarr[0].id, 3);
+    ASSERT_CMP(sarr[0].value, 3.0f);
 
     array_remove_index(sarr, 0);
-    assert(array_len(sarr) == 0);
+    ASSERT_CMP(array_len(sarr), (size_t)0);
 
     array_free(sarr);
 }

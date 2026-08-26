@@ -1,7 +1,6 @@
 #define STRING_VIEW_IMPLEMENTATION
 #include "string/string_view.h"
 
-#include <assert.h>
 #include <string.h>
 
 #include "test_suite.h"
@@ -9,54 +8,54 @@
 void test_sv_string_to_string_view(void) {
     char* s        = "hello";
     string_view sv = sv_string_to_string_view(s);
-    assert(sv.size == 5);
-    assert(sv.data == s);
+    ASSERT_CMP(sv.size, (size_t)5);
+    ASSERT_CMP((const void*)sv.data, (const void*)s, "same pointer, not just same text");
 
     string_view empty = sv_string_to_string_view("");
-    assert(empty.size == 0);
+    ASSERT_CMP(empty.size, (size_t)0);
 }
 
 void test_sv_substring(void) {
     string_view sv = sv_string_to_string_view("hello world");
 
     string_view head = sv_substring(sv, 0, 5);
-    assert(head.size == 5);
-    assert(strncmp(head.data, "hello", 5) == 0);
+    ASSERT_CMP(head.size, (size_t)5);
+    ASSERT_CMP(strncmp(head.data, "hello", 5), 0);
 
     string_view tail = sv_substring(sv, 6, 11);
-    assert(tail.size == 5);
-    assert(strncmp(tail.data, "world", 5) == 0);
+    ASSERT_CMP(tail.size, (size_t)5);
+    ASSERT_CMP(strncmp(tail.data, "world", 5), 0);
 
     string_view zero = sv_substring(sv, 3, 3);
-    assert(zero.size == 0);
+    ASSERT_CMP(zero.size, (size_t)0);
 }
 
 void test_sv_trim_left(void) {
     string_view sv = sv_string_to_string_view("hello");
 
     string_view trimmed = sv_trim_left(sv, 2);
-    assert(trimmed.size == 3);
-    assert(strncmp(trimmed.data, "llo", 3) == 0);
+    ASSERT_CMP(trimmed.size, (size_t)3);
+    ASSERT_CMP(strncmp(trimmed.data, "llo", 3), 0);
 
     string_view none = sv_trim_left(sv, 0);
-    assert(none.size == 5);
+    ASSERT_CMP(none.size, (size_t)5);
 
     string_view all = sv_trim_left(sv, 5);
-    assert(all.size == 0);
+    ASSERT_CMP(all.size, (size_t)0);
 }
 
 void test_sv_trim_right(void) {
     string_view sv = sv_string_to_string_view("hello");
 
     string_view trimmed = sv_trim_right(sv, 2);
-    assert(trimmed.size == 3);
-    assert(strncmp(trimmed.data, "hel", 3) == 0);
+    ASSERT_CMP(trimmed.size, (size_t)3);
+    ASSERT_CMP(strncmp(trimmed.data, "hel", 3), 0);
 
     string_view none = sv_trim_right(sv, 0);
-    assert(none.size == 5);
+    ASSERT_CMP(none.size, (size_t)5);
 
     string_view all = sv_trim_right(sv, 5);
-    assert(all.size == 0);
+    ASSERT_CMP(all.size, (size_t)0);
 }
 
 void test_sv_starts_with(void) {
@@ -65,10 +64,10 @@ void test_sv_starts_with(void) {
     string_view nomatch = sv_string_to_string_view("world");
     string_view empty   = sv_string_to_string_view("");
 
-    assert(sv_starts_with(sv, match) == true);
-    assert(sv_starts_with(sv, nomatch) == false);
-    assert(sv_starts_with(sv, empty) == true);
-    assert(sv_starts_with(sv, sv) == true);
+    ASSERT_TRUE(sv_starts_with(sv, match));
+    ASSERT_FALSE(sv_starts_with(sv, nomatch));
+    ASSERT_TRUE(sv_starts_with(sv, empty));
+    ASSERT_TRUE(sv_starts_with(sv, sv));
 }
 
 void test_sv_ends_with(void) {
@@ -77,21 +76,21 @@ void test_sv_ends_with(void) {
     string_view nomatch = sv_string_to_string_view("hello");
     string_view empty   = sv_string_to_string_view("");
 
-    assert(sv_ends_with(sv, match) == true);
-    assert(sv_ends_with(sv, nomatch) == false);
-    assert(sv_ends_with(sv, empty) == true);
-    assert(sv_ends_with(sv, sv) == true);
+    ASSERT_TRUE(sv_ends_with(sv, match));
+    ASSERT_FALSE(sv_ends_with(sv, nomatch));
+    ASSERT_TRUE(sv_ends_with(sv, empty));
+    ASSERT_TRUE(sv_ends_with(sv, sv));
 }
 
 void test_sv_copy(void) {
     string_view sv = sv_string_to_string_view("hello");
     char buf[16]   = {0};
 
-    assert(sv_copy(sv, buf, sizeof(buf)) == true);
-    assert(strncmp(buf, "hello", 5) == 0);
+    ASSERT_TRUE(sv_copy(sv, buf, sizeof(buf)));
+    ASSERT_CMP(strncmp(buf, "hello", 5), 0);
 
     char small[3] = {0};
-    assert(sv_copy(sv, small, sizeof(small)) == false);
+    ASSERT_FALSE(sv_copy(sv, small, sizeof(small)));
 }
 
 void test_sv_compare(void) {
@@ -100,11 +99,11 @@ void test_sv_compare(void) {
     string_view after  = sv_string_to_string_view("abd");
     string_view short_ = sv_string_to_string_view("ab");
 
-    assert(sv_compare(a, same) == 0);
-    assert(sv_compare(a, after) < 0);
-    assert(sv_compare(after, a) > 0);
-    assert(sv_compare(short_, a) < 0);
-    assert(sv_compare(a, short_) > 0);
+    ASSERT_CMP(sv_compare(a, same), 0);
+    ASSERT_TRUE(sv_compare(a, after) < 0);
+    ASSERT_TRUE(sv_compare(after, a) > 0);
+    ASSERT_TRUE(sv_compare(short_, a) < 0);
+    ASSERT_TRUE(sv_compare(a, short_) > 0);
 }
 
 int main(void) {

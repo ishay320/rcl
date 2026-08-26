@@ -1,6 +1,5 @@
 #include "queue/queue_a.h"
 
-#include <assert.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -20,37 +19,37 @@ typedef struct queue {
 void test_qa_fifo_order(void) {
     queue q    = qa_init(queue, 5);
     int vals[] = {10, 20, 30, 40, 50};
-    for (int i = 0; i < 5; i++) assert(qa_push(q, vals[i]));
+    for (int i = 0; i < 5; i++) ASSERT_TRUE(qa_push(q, vals[i]));
 
     int out;
     for (int i = 0; i < 5; i++) {
-        assert(qa_pop(q, out));
-        assert(out == vals[i]);
+        ASSERT_TRUE(qa_pop(q, out));
+        ASSERT_CMP(out, vals[i]);
     }
-    assert(qa_is_empty(q));
+    ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
 }
 
 void test_qa_is_empty(void) {
     queue q = qa_init(queue, 4);
-    assert(qa_is_empty(q));
+    ASSERT_TRUE(qa_is_empty(q));
     qa_push(q, 1);
-    assert(!qa_is_empty(q));
+    ASSERT_FALSE(qa_is_empty(q));
     int out = 0;
     qa_pop(q, out);
     (void)out;
-    assert(qa_is_empty(q));
+    ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
 }
 
 void test_qa_is_full(void) {
     queue q = qa_init(queue, 3);
-    assert(qa_push(q, 1));
-    assert(qa_push(q, 2));
-    assert(qa_push(q, 3));
-    assert(qa_is_full(q));
-    assert(!qa_push(q, 4));
-    assert(qa_size(q) == 3);
+    ASSERT_TRUE(qa_push(q, 1));
+    ASSERT_TRUE(qa_push(q, 2));
+    ASSERT_TRUE(qa_push(q, 3));
+    ASSERT_TRUE(qa_is_full(q));
+    ASSERT_FALSE(qa_push(q, 4));
+    ASSERT_CMP(qa_size(q), (size_t)3);
     qa_destroy(q);
 }
 
@@ -61,11 +60,11 @@ void test_qa_front_back(void) {
     qa_push(q, 33);
 
     int f, b;
-    assert(qa_front(q, f));
-    assert(f == 11);
-    assert(qa_back(q, b));
-    assert(b == 33);
-    assert(qa_size(q) == 3); /* peek must not modify size */
+    ASSERT_TRUE(qa_front(q, f));
+    ASSERT_CMP(f, 11);
+    ASSERT_TRUE(qa_back(q, b));
+    ASSERT_CMP(b, 33);
+    ASSERT_CMP(qa_size(q), (size_t)3); /* peek must not modify size */
     qa_destroy(q);
 }
 
@@ -78,35 +77,35 @@ void test_qa_circular_wrap(void) {
 
     int out = 0;
     qa_pop(q, out);
-    assert(out == 1);
+    ASSERT_CMP(out, 1);
     qa_pop(q, out);
-    assert(out == 2);
+    ASSERT_CMP(out, 2);
 
-    assert(qa_push(q, 5));
-    assert(qa_push(q, 6));
-    assert(qa_is_full(q));
+    ASSERT_TRUE(qa_push(q, 5));
+    ASSERT_TRUE(qa_push(q, 6));
+    ASSERT_TRUE(qa_is_full(q));
 
     qa_pop(q, out);
-    assert(out == 3);
+    ASSERT_CMP(out, 3);
     qa_pop(q, out);
-    assert(out == 4);
+    ASSERT_CMP(out, 4);
     qa_pop(q, out);
-    assert(out == 5);
+    ASSERT_CMP(out, 5);
     qa_pop(q, out);
-    assert(out == 6);
-    assert(qa_is_empty(q));
+    ASSERT_CMP(out, 6);
+    ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
 }
 
 void test_qa_boundary_values(void) {
     queue q    = qa_init(queue, 4);
     int vals[] = {0, -1, INT_MIN, INT_MAX};
-    for (int i = 0; i < 4; i++) assert(qa_push(q, vals[i]));
+    for (int i = 0; i < 4; i++) ASSERT_TRUE(qa_push(q, vals[i]));
 
     int out;
     for (int i = 0; i < 4; i++) {
-        assert(qa_pop(q, out));
-        assert(out == vals[i]);
+        ASSERT_TRUE(qa_pop(q, out));
+        ASSERT_CMP(out, vals[i]);
     }
     qa_destroy(q);
 }
@@ -116,13 +115,13 @@ void test_qa_clear(void) {
     qa_push(q, 1);
     qa_push(q, 2);
     qa_clear(q);
-    assert(qa_is_empty(q));
-    assert(qa_size(q) == 0);
+    ASSERT_TRUE(qa_is_empty(q));
+    ASSERT_CMP(qa_size(q), (size_t)0);
 
-    assert(qa_push(q, 99));
+    ASSERT_TRUE(qa_push(q, 99));
     int out;
-    assert(qa_pop(q, out));
-    assert(out == 99);
+    ASSERT_TRUE(qa_pop(q, out));
+    ASSERT_CMP(out, 99);
     qa_destroy(q);
 }
 
@@ -130,26 +129,26 @@ void test_qa_destroy(void) {
     queue q = qa_init(queue, 4);
     qa_push(q, 7);
     qa_destroy(q);
-    assert(q.data == NULL);
-    assert(q.size == 0);
-    assert(q.cap == 0);
+    ASSERT_CMP(q.data, NULL);
+    ASSERT_CMP(q.size, (size_t)0);
+    ASSERT_CMP(q.cap, (size_t)0);
 }
 
 void test_qa_pop_empty(void) {
     queue q = qa_init(queue, 4);
     int out = 0;
-    assert(!qa_pop(q, out));
-    assert(out == 0); /* out unchanged */
+    ASSERT_FALSE(qa_pop(q, out));
+    ASSERT_CMP(out, 0); /* out unchanged */
     qa_destroy(q);
 }
 
 void test_qa_front_back_empty(void) {
     queue q = qa_init(queue, 4);
     int f = 0, b = 0;
-    assert(!qa_front(q, f));
-    assert(!qa_back(q, b));
-    assert(f == 0); /* out unchanged */
-    assert(b == 0);
+    ASSERT_FALSE(qa_front(q, f));
+    ASSERT_FALSE(qa_back(q, b));
+    ASSERT_CMP(f, 0); /* out unchanged */
+    ASSERT_CMP(b, 0);
     qa_destroy(q);
 }
 
@@ -172,17 +171,17 @@ void test_qa_big_struct(void) {
 
     for (int i = 0; i < 8; i++) {
         big_item item = {.id = i, .score = (float)i * 1.5f};
-        assert(qa_push(q, item));
+        ASSERT_TRUE(qa_push(q, item));
     }
-    assert(qa_is_full(q));
+    ASSERT_TRUE(qa_is_full(q));
 
     for (int i = 0; i < 8; i++) {
         big_item out;
-        assert(qa_pop(q, out));
-        assert(out.id == i);
-        assert(out.score == (float)i * 1.5f);
+        ASSERT_TRUE(qa_pop(q, out));
+        ASSERT_CMP(out.id, i);
+        ASSERT_CMP(out.score, (float)i * 1.5f);
     }
-    assert(qa_is_empty(q));
+    ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
 }
 

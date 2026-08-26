@@ -1,6 +1,5 @@
 #include "arrays/dynamic_array.h"
 
-#include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,22 +25,22 @@ typedef struct {
 void test_da_i_append(void) {
     da_i arr   = {0};
     int vals[] = {10, 20, 30, 40, 50};
-    for (int i = 0; i < 5; i++) assert(da_append(arr, vals[i]));
+    for (int i = 0; i < 5; i++) ASSERT_TRUE(da_append(arr, vals[i]));
 
-    assert(arr.size == 5);
-    assert(arr.capacity >= 5);
-    for (int i = 0; i < 5; i++) assert(arr.data[i] == vals[i]);
+    ASSERT_CMP(arr.size, (size_t)5);
+    ASSERT_TRUE(arr.capacity >= 5);
+    for (int i = 0; i < 5; i++) ASSERT_CMP(arr.data[i], vals[i]);
 
     da_destroy(&arr);
 }
 
 void test_da_s_append_counting(void) {
     da_s arr = {0};
-    assert(da_append(arr, "test one size"));
+    ASSERT_TRUE(da_append(arr, "test one size"));
 
-    assert(arr.size == 1);
-    assert(arr.capacity >= 1);
-    assert(strcmp(arr.data[0], "test one size") == 0);
+    ASSERT_CMP(arr.size, (size_t)1);
+    ASSERT_TRUE(arr.capacity >= 1);
+    ASSERT_CMP(arr.data[0], "test one size");
 
     da_destroy(&arr);
 }
@@ -50,16 +49,16 @@ void test_da_i_double_destroy(void) {
     da_i arr = {0};
     da_append(arr, 1);
     da_destroy(&arr);
-    assert(arr.data == NULL);
-    assert(arr.size == 0);
-    assert(arr.capacity == 0);
+    ASSERT_CMP(arr.data, NULL);
+    ASSERT_CMP(arr.size, (size_t)0);
+    ASSERT_CMP(arr.capacity, (size_t)0);
     da_destroy(&arr);
 }
 
 void test_da_p_empty(void) {
     da_p empty = {0};
-    assert(empty.size == 0);
-    assert(empty.capacity == 0);
+    ASSERT_CMP(empty.size, (size_t)0);
+    ASSERT_CMP(empty.capacity, (size_t)0);
     da_destroy(&empty);
 }
 
@@ -67,21 +66,21 @@ void test_da_p_append(void) {
     da_p arr = {0};
     int a = 1, b = 2, c = 3;
     void* vals[] = {&a, &b, &c};
-    for (int i = 0; i < 3; i++) assert(da_append(arr, vals[i]));
+    for (int i = 0; i < 3; i++) ASSERT_TRUE(da_append(arr, vals[i]));
 
-    assert(arr.size == 3);
-    for (int i = 0; i < 3; i++) assert(arr.data[i] == vals[i]);
+    ASSERT_CMP(arr.size, (size_t)3);
+    for (int i = 0; i < 3; i++) ASSERT_CMP(arr.data[i], vals[i]);
 
     da_destroy(&arr);
-    assert(arr.data == NULL);
+    ASSERT_CMP(arr.data, NULL);
 }
 
 void test_da_i_single_element(void) {
     da_i arr = {0};
-    assert(da_append(arr, 42));
-    assert(arr.size == 1);
-    assert(arr.capacity == DA_INITIAL_CAPACITY);
-    assert(arr.data[0] == 42);
+    ASSERT_TRUE(da_append(arr, 42));
+    ASSERT_CMP(arr.size, (size_t)1);
+    ASSERT_CMP(arr.capacity, (size_t)DA_INITIAL_CAPACITY);
+    ASSERT_CMP(arr.data[0], 42);
     da_destroy(&arr);
 }
 
@@ -91,10 +90,10 @@ void test_da_i_reuse_after_destroy(void) {
     da_destroy(&arr);
 
     for (int i = 0; i < 3; i++) da_append(arr, i + 100);
-    assert(arr.size == 3);
-    assert(arr.data[0] == 100);
-    assert(arr.data[1] == 101);
-    assert(arr.data[2] == 102);
+    ASSERT_CMP(arr.size, (size_t)3);
+    ASSERT_CMP(arr.data[0], 100);
+    ASSERT_CMP(arr.data[1], 101);
+    ASSERT_CMP(arr.data[2], 102);
 
     da_destroy(&arr);
 }
@@ -103,11 +102,11 @@ void test_da_i_capacity_growth(void) {
     da_i arr = {0};
     for (int i = 0; i < 50; i++) da_append(arr, i);
 
-    assert(arr.size == 50);
-    assert(arr.capacity >= 50);
-    assert((arr.capacity & (arr.capacity - 1)) == 0);
-    assert(arr.data[0] == 0);
-    assert(arr.data[49] == 49);
+    ASSERT_CMP(arr.size, (size_t)50);
+    ASSERT_TRUE(arr.capacity >= 50);
+    ASSERT_CMP((arr.capacity & (arr.capacity - 1)), (size_t)0);
+    ASSERT_CMP(arr.data[0], 0);
+    ASSERT_CMP(arr.data[49], 49);
 
     da_destroy(&arr);
 }
@@ -115,26 +114,26 @@ void test_da_i_capacity_growth(void) {
 void test_da_i_boundary_values(void) {
     da_i arr   = {0};
     int vals[] = {0, -1, -100, INT_MIN, INT_MAX};
-    for (int i = 0; i < 5; i++) assert(da_append(arr, vals[i]));
+    for (int i = 0; i < 5; i++) ASSERT_TRUE(da_append(arr, vals[i]));
 
-    assert(arr.size == 5);
-    for (int i = 0; i < 5; i++) assert(arr.data[i] == vals[i]);
+    ASSERT_CMP(arr.size, (size_t)5);
+    for (int i = 0; i < 5; i++) ASSERT_CMP(arr.data[i], vals[i]);
 
     da_destroy(&arr);
 }
 
 void test_da_i_reserve(void) {
     da_i arr = {0};
-    assert(da_reserve(arr, 100));
-    assert(arr.capacity == 100);
-    assert(arr.size == 0);
+    ASSERT_TRUE(da_reserve(arr, 100));
+    ASSERT_CMP(arr.capacity, (size_t)100);
+    ASSERT_CMP(arr.size, (size_t)0);
 
-    assert(da_reserve(arr, 10));
-    assert(arr.capacity == 100);
+    ASSERT_TRUE(da_reserve(arr, 10));
+    ASSERT_CMP(arr.capacity, (size_t)100);
 
     da_append(arr, 42);
-    assert(arr.size == 1);
-    assert(arr.data[0] == 42);
+    ASSERT_CMP(arr.size, (size_t)1);
+    ASSERT_CMP(arr.data[0], 42);
 
     da_destroy(&arr);
 }

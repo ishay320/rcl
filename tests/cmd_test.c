@@ -1,7 +1,6 @@
 #define CMD_IMPLEMENTATION
 #include "cmd.h"
 
-#include <assert.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -33,7 +32,7 @@ void test_spawn_fail(void) {
     ASSERT_TRUE(cmd_append(&cmd, "command that is not existing"), "failed to append");
     cmd_proc proc = {0};
     ASSERT_FALSE(cmd_spawn(cmd, &proc), "spawn");
-    ASSERT_TRUE(errno == ENOENT, "errno should be ENOENT");
+    ASSERT_CMP(errno, ENOENT, "errno should be ENOENT");
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
 }
@@ -50,9 +49,9 @@ void test_spawn_empty(void) {
 void test_destroy_empty_proc(void) {
     cmd_proc proc = {0};
     cmd_destroy(&proc);
-    ASSERT_TRUE(proc.p_stdout[0] == 0, "destroy closes pipes");
-    ASSERT_TRUE(proc.p_stderr[0] == 0, "destroy closes pipes");
-    ASSERT_TRUE(proc.p_stdin[1] == 0, "destroy closes pipes");
+    ASSERT_CMP(proc.p_stdout[0], 0, "destroy closes pipes");
+    ASSERT_CMP(proc.p_stderr[0], 0, "destroy closes pipes");
+    ASSERT_CMP(proc.p_stdin[1], 0, "destroy closes pipes");
 }
 
 // test read output stdout
@@ -66,7 +65,7 @@ void test_read_output(void) {
     char buffer[128] = {0};
     cmd_read(proc, buffer, sizeof(buffer) - 1, 1000);
 
-    ASSERT_TRUE(strcmp(buffer, "hello world\n") == 0, "str matches");
+    ASSERT_CMP(buffer, "hello world\n", "str matches");
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
 }
@@ -83,7 +82,7 @@ void test_read_err(void) {
     char buffer[128] = {0};
     cmd_read_err(proc, buffer, sizeof(buffer) - 1, 1000);
 
-    ASSERT_TRUE(strcmp(buffer, "hello world\n") == 0, "str matches");
+    ASSERT_CMP(buffer, "hello world\n", "str matches");
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
 }
@@ -97,13 +96,13 @@ void test_write_input(void) {
 
     const char* msg = "hello from parent\n";
     ssize_t n       = cmd_write(proc, (char*)msg, strlen(msg));
-    ASSERT_TRUE(n == (ssize_t)strlen(msg), "write should write all bytes");
+    ASSERT_CMP(n, (ssize_t)strlen(msg), "write should write all bytes");
 
     char buffer[128] = {0};
     n                = cmd_read(proc, buffer, sizeof(buffer) - 1, 1000);
-    ASSERT_TRUE(n == (ssize_t)strlen(msg), "read should read all bytes");
+    ASSERT_CMP(n, (ssize_t)strlen(msg), "read should read all bytes");
     buffer[n] = '\0';
-    ASSERT_TRUE(strcmp(buffer, msg) == 0, "str matches");
+    ASSERT_CMP(buffer, msg, "str matches");
 
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
@@ -119,7 +118,7 @@ void test_wait_long_commands(void) {
     // wait for it to finish
     int status;
     ASSERT_TRUE(cmd_wait(&proc, &status, 0), "exit code");
-    ASSERT_TRUE(status == 0, "exit code should be 0");
+    ASSERT_CMP(status, 0, "exit code should be 0");
     cmd_builder_destroy(&cmd);
 }
 
@@ -131,7 +130,7 @@ void test_wait_partial_long_commands(void) {
     cmd_proc proc = {0};
     ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
     int status = 69;
-    ASSERT_TRUE(status == 69, "exit code should be unchanged");
+    ASSERT_CMP(status, 69, "exit code should be unchanged");
     ASSERT_FALSE(cmd_wait(&proc, &status, 50), "exit code");
     cmd_builder_destroy(&cmd);
 }
@@ -145,7 +144,7 @@ void test_return_status(void) {
     cmd_builder_destroy(&cmd_t);
     int status = -1;
     ASSERT_TRUE(cmd_wait(&proc_t, &status, 5), "exit code");
-    ASSERT_TRUE(status == 0, "output status of true will be 0");
+    ASSERT_CMP(status, 0, "output status of true will be 0");
     cmd_destroy(&proc_t);
 
     cmd_builder cmd_f = {0};
@@ -155,7 +154,7 @@ void test_return_status(void) {
     cmd_builder_destroy(&cmd_f);
     status = -1;
     ASSERT_TRUE(cmd_wait(&proc_f, &status, 5), "exit code");
-    ASSERT_TRUE(status == 1, "output status of true will be 0");
+    ASSERT_CMP(status, 1, "output status of true will be 0");
     cmd_destroy(&proc_f);
     cmd_destroy(&proc_f);
 }
@@ -198,7 +197,7 @@ void test_spawn_procs_together_io(void) {
         cmd_read(procs[i], buffer, 32, 20);
         char test_buffer[8];
         sprintf(test_buffer, "%d", i);
-        ASSERT_TRUE(strcmp(buffer, test_buffer) == 0, "str io not match");
+        ASSERT_CMP(buffer, test_buffer, "str io not match");
         cmd_destroy(&procs[i]);
     }
 }
