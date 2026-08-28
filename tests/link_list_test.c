@@ -14,7 +14,7 @@ static int find_data_1(node_i_s* n) { return n->data == 1; }
 static int find_data_2(node_i_s* n) { return n->data == 2; }
 static int find_data_99(node_i_s* n) { return n->data == 99; }
 
-void test_ll_insert_next(void) {
+TEST_CASE(test_ll_insert_next, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     node_i_s c = {.data = 3};
@@ -23,17 +23,17 @@ void test_ll_insert_next(void) {
     ASSERT_CMP(a.next, &b);
     ASSERT_CMP(b.next, &c);
     ASSERT_CMP(a.next->next->data, 3);
-}
+})
 
-void test_ll_is_empty(void) {
+TEST_CASE(test_ll_is_empty, {
     node_i_s a = {.data = 1};
     ASSERT_TRUE(ll_is_empty(a));
     node_i_s b = {.data = 2};
     ll_insert_next(&a, &b);
     ASSERT_FALSE(ll_is_empty(a));
-}
+})
 
-void test_ll_remove_next_middle(void) {
+TEST_CASE(test_ll_remove_next_middle, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     node_i_s c = {.data = 3};
@@ -43,17 +43,17 @@ void test_ll_remove_next_middle(void) {
     ASSERT_CMP(a.next, &c);
     ASSERT_CMP(a.next->data, 3);
     ASSERT_CMP(&b, n);
-}
+})
 
-void test_ll_remove_next_last(void) {
+TEST_CASE(test_ll_remove_next_last, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     ll_insert_next(&a, &b);
     ll_remove_next(&a);
     ASSERT_CMP(a.next, NULL);
-}
+})
 
-void test_ll_count(void) {
+TEST_CASE(test_ll_count, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     node_i_s c = {.data = 3};
@@ -61,9 +61,9 @@ void test_ll_count(void) {
     ll_insert_next(&a, &b);
     ll_insert_next(&b, &c);
     ASSERT_CMP(ll_count(a), (size_t)3);
-}
+})
 
-void test_ll_find(void) {
+TEST_CASE(test_ll_find, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     node_i_s c = {.data = 3};
@@ -75,17 +75,17 @@ void test_ll_find(void) {
     ASSERT_CMP(found, &b);
     node_i_s* not_found = ll_find(a, find_data_99);
     ASSERT_CMP(not_found, NULL);
-}
+})
 
-void test_ll_insert_tail_single(void) {
+TEST_CASE(test_ll_insert_tail_single, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     ll_insert_tail(&a, &b);
     ASSERT_CMP(a.next, &b);
     ASSERT_CMP(b.next, NULL);
-}
+})
 
-void test_ll_insert_tail_chain(void) {
+TEST_CASE(test_ll_insert_tail_chain, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     node_i_s c = {.data = 3};
@@ -94,9 +94,9 @@ void test_ll_insert_tail_chain(void) {
     ASSERT_CMP(a.next, &b);
     ASSERT_CMP(b.next, &c);
     ASSERT_CMP(c.next, NULL);
-}
+})
 
-void test_ll_insert_tail_deep(void) {
+TEST_CASE(test_ll_insert_tail_deep, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     node_i_s c = {.data = 3};
@@ -106,9 +106,9 @@ void test_ll_insert_tail_deep(void) {
     ll_insert_tail(&a, &d);
     ASSERT_CMP(c.next, &d);
     ASSERT_CMP(d.next, NULL);
-}
+})
 
-void test_ll_for_each(void) {
+TEST_CASE(test_ll_for_each, {
     node_i_s a = {.data = 1};
     node_i_s b = {.data = 2};
     node_i_s c = {.data = 3};
@@ -117,9 +117,9 @@ void test_ll_for_each(void) {
     int sum = 0;
     ll_for_each(a, i) { sum += i->data; }
     ASSERT_CMP(sum, 6);
-}
+})
 
-void test_ll_free(void) {
+TEST_CASE(test_ll_free, {
     node_i_s* base = calloc(1, sizeof(node_i_s));
     base->data     = 1;
     for (int i = 0; i < 10; i++) {
@@ -133,7 +133,7 @@ void test_ll_free(void) {
         next = cur->next;
         free(cur);
     }
-}
+})
 
 int main(void) {
     START_SUITE;

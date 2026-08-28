@@ -3,30 +3,30 @@
 
 #include "test_suite.h"
 
-void test_array_initialization(void) {
+TEST_CASE(test_array_initialization, {
     int* arr = array_init(int);
     ASSERT_TRUE(arr != NULL);
     array_free(arr);
-}
+})
 
-void test_array_init_sized(void) {
+TEST_CASE(test_array_init_sized, {
     int* arr = array_init_sized(int, 10);
     ASSERT_TRUE(arr != NULL);
     struct array* header = array_get_header(arr);
     ASSERT_CMP(header->cap, (size_t)10);
     array_free(arr);
-}
+})
 
-void test_array_push_rval(void) {
+TEST_CASE(test_array_push_rval, {
     int* arr = array_init(int);
     array_push_rval(arr, 42);
     struct array* header = array_get_header(arr);
     ASSERT_CMP(header->len, (size_t)1);
     ASSERT_CMP(arr[0], 42);
     array_free(arr);
-}
+})
 
-void test_array_push(void) {
+TEST_CASE(test_array_push, {
     int* arr = array_init(int);
     int item = 42;
     array_push(arr, item);
@@ -34,9 +34,9 @@ void test_array_push(void) {
     ASSERT_CMP(header->len, (size_t)1);
     ASSERT_CMP(arr[0], 42);
     array_free(arr);
-}
+})
 
-void test_array_resizing_dynamicly(void) {
+TEST_CASE(test_array_resizing_dynamicly, {
     int* arr = array_init(int);
     for (int i = 0; i < 100; i++) {
         array_push(arr, i);
@@ -48,23 +48,23 @@ void test_array_resizing_dynamicly(void) {
         ASSERT_CMP(arr[i], i);
     }
     array_free(arr);
-}
+})
 
-void test_array_free(void) {
+TEST_CASE(test_array_free, {
     int* arr = array_init(int);
     array_push_rval(arr, 10);
     array_free(arr);
-}
+})
 
-void test_array_cap(void) {
+TEST_CASE(test_array_cap, {
     int* arr             = array_init_sized(int, 50);
     struct array* header = array_get_header(arr);
     ASSERT_CMP(array_cap(arr), header->cap);
     ASSERT_CMP(header->cap, (size_t)50);
     array_free(arr);
-}
+})
 
-void test_array_len(void) {
+TEST_CASE(test_array_len, {
     int* arr = array_init(int);
     ASSERT_CMP(array_len(arr), (size_t)0);
 
@@ -75,9 +75,9 @@ void test_array_len(void) {
     ASSERT_CMP(array_len(arr), (size_t)2);
 
     array_free(arr);
-}
+})
 
-void test_array_stride(void) {
+TEST_CASE(test_array_stride, {
     int* int_arr = array_init(int);
     ASSERT_CMP(array_stride(int_arr), sizeof(int));
 
@@ -86,9 +86,9 @@ void test_array_stride(void) {
 
     array_free(int_arr);
     array_free(double_arr);
-}
+})
 
-void test_array_reserve(void) {
+TEST_CASE(test_array_reserve, {
     int* array = array_init(int);
     ASSERT_TRUE(array_reserve(array, 10));
     ASSERT_CMP(array_cap(array), (size_t)10);
@@ -98,9 +98,9 @@ void test_array_reserve(void) {
     ASSERT_CMP(array_cap(array), (size_t)30);
 
     array_free(array);
-}
+})
 
-void test_array_resize(void) {
+TEST_CASE(test_array_resize, {
     int* array = array_init(int);
     ASSERT_TRUE(array_resize(array, 10));
     ASSERT_CMP(array_cap(array), (size_t)10);
@@ -110,7 +110,7 @@ void test_array_resize(void) {
     ASSERT_CMP(array_cap(array), (size_t)30);
 
     array_free(array);
-}
+})
 
 typedef struct {
     int id;
@@ -118,7 +118,7 @@ typedef struct {
     char tag[8];
 } test_item_t;
 
-void test_array_remove_index(void) {
+TEST_CASE(test_array_remove_index, {
     int* array = array_init(int);
 
     array_push_rval(array, 12);
@@ -168,7 +168,7 @@ void test_array_remove_index(void) {
     ASSERT_CMP(array_len(sarr), (size_t)0);
 
     array_free(sarr);
-}
+})
 
 int main(void) {
     START_SUITE;

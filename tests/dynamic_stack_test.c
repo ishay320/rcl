@@ -10,7 +10,7 @@ typedef struct {
     int* data;
 } ds_i;
 
-void test_ds_push_and_top(void) {
+TEST_CASE(test_ds_push_and_top, {
     ds_i s = {0};
     ASSERT_TRUE(ds_push(s, 10));
     ASSERT_TRUE(ds_push(s, 20));
@@ -18,9 +18,9 @@ void test_ds_push_and_top(void) {
     ASSERT_CMP(ds_top(s), 30);
     ASSERT_CMP(ds_size(s), (size_t)3);
     ds_destroy(&s);
-}
+})
 
-void test_ds_pop_order(void) {
+TEST_CASE(test_ds_pop_order, {
     ds_i s     = {0};
     int vals[] = {1, 2, 3, 4, 5};
     for (int i = 0; i < 5; i++) ds_push(s, vals[i]);
@@ -32,9 +32,9 @@ void test_ds_pop_order(void) {
     }
     ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
-}
+})
 
-void test_ds_is_empty(void) {
+TEST_CASE(test_ds_is_empty, {
     ds_i s = {0};
     ASSERT_TRUE(ds_is_empty(s));
     ds_push(s, 42);
@@ -42,9 +42,9 @@ void test_ds_is_empty(void) {
     (void)ds_pop(s);
     ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
-}
+})
 
-void test_ds_single_element(void) {
+TEST_CASE(test_ds_single_element, {
     ds_i s = {0};
     ASSERT_TRUE(ds_push(s, 99));
     ASSERT_CMP(ds_size(s), (size_t)1);
@@ -53,9 +53,9 @@ void test_ds_single_element(void) {
     ASSERT_CMP(v, 99);
     ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
-}
+})
 
-void test_ds_boundary_values(void) {
+TEST_CASE(test_ds_boundary_values, {
     ds_i s     = {0};
     int vals[] = {0, -1, INT_MIN, INT_MAX};
     for (int i = 0; i < 4; i++) ds_push(s, vals[i]);
@@ -63,9 +63,9 @@ void test_ds_boundary_values(void) {
     for (int i = 3; i >= 0; i--) ASSERT_CMP(ds_pop(s), vals[i]);
     ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
-}
+})
 
-void test_ds_push_many(void) {
+TEST_CASE(test_ds_push_many, {
     ds_i s = {0};
     for (int i = 0; i < 100; i++) ASSERT_TRUE(ds_push(s, i));
     ASSERT_CMP(ds_size(s), (size_t)100);
@@ -73,9 +73,9 @@ void test_ds_push_many(void) {
     for (int i = 99; i >= 0; i--) ASSERT_CMP(ds_pop(s), i);
     ASSERT_TRUE(ds_is_empty(s));
     ds_destroy(&s);
-}
+})
 
-void test_ds_size(void) {
+TEST_CASE(test_ds_size, {
     ds_i s = {0};
     ASSERT_CMP(ds_size(s), (size_t)0);
     ds_push(s, 1);
@@ -86,9 +86,9 @@ void test_ds_size(void) {
     (void)ds_pop(s);
     ASSERT_CMP(ds_size(s), (size_t)2);
     ds_destroy(&s);
-}
+})
 
-void test_ds_reuse_after_empty(void) {
+TEST_CASE(test_ds_reuse_after_empty, {
     ds_i s = {0};
     ds_push(s, 1);
     ds_push(s, 2);
@@ -100,7 +100,7 @@ void test_ds_reuse_after_empty(void) {
     ASSERT_CMP(ds_size(s), (size_t)2);
     ASSERT_CMP(ds_top(s), 20);
     ds_destroy(&s);
-}
+})
 
 int main(void) {
     START_SUITE;

@@ -3,13 +3,13 @@
 
 #include "test_suite.h"
 
-void test_sb_create(void) {
+TEST_CASE(test_sb_create, {
     string_builder* sb = sb_create();
     ASSERT_TRUE(sb != NULL);
     sb_destroy(sb);
-}
+})
 
-void test_sb_append_single(void) {
+TEST_CASE(test_sb_append_single, {
     string_builder* sb = sb_create();
     ASSERT_TRUE(sb != NULL);
     ASSERT_TRUE(sb_append(sb, "hello"));
@@ -18,9 +18,9 @@ void test_sb_append_single(void) {
     ASSERT_CMP(s, "hello");
     free((char*)s);
     sb_destroy(sb);
-}
+})
 
-void test_sb_append_multiple(void) {
+TEST_CASE(test_sb_append_multiple, {
     string_builder* sb = sb_create();
     ASSERT_TRUE(sb != NULL);
     ASSERT_TRUE(sb_append(sb, "hello"));
@@ -31,9 +31,9 @@ void test_sb_append_multiple(void) {
     ASSERT_CMP(s, "hello, world");
     free((char*)s);
     sb_destroy(sb);
-}
+})
 
-void test_sb_fappend(void) {
+TEST_CASE(test_sb_fappend, {
     string_builder* sb = sb_create();
     ASSERT_TRUE(sb != NULL);
     ASSERT_TRUE(sb_fappend(sb, "value=%d", 42));
@@ -42,9 +42,9 @@ void test_sb_fappend(void) {
     ASSERT_CMP(s, "value=42");
     free((char*)s);
     sb_destroy(sb);
-}
+})
 
-void test_sb_fappend_mixed(void) {
+TEST_CASE(test_sb_fappend_mixed, {
     string_builder* sb = sb_create();
     ASSERT_TRUE(sb != NULL);
     ASSERT_TRUE(sb_append(sb, "hello, "));
@@ -54,9 +54,9 @@ void test_sb_fappend_mixed(void) {
     ASSERT_CMP(s, "hello, world 42");
     free((char*)s);
     sb_destroy(sb);
-}
+})
 
-void test_sb_empty(void) {
+TEST_CASE(test_sb_empty, {
     string_builder* sb = sb_create();
     ASSERT_TRUE(sb != NULL);
     const char* s = sb_get_string(sb);
@@ -64,9 +64,9 @@ void test_sb_empty(void) {
     ASSERT_CMP(s, "");
     free((char*)s);
     sb_destroy(sb);
-}
+})
 
-void test_sb_append_empty_string(void) {
+TEST_CASE(test_sb_append_empty_string, {
     string_builder* sb = sb_create();
     ASSERT_TRUE(sb != NULL);
     ASSERT_TRUE(sb_append(sb, ""));
@@ -77,9 +77,9 @@ void test_sb_append_empty_string(void) {
     ASSERT_CMP(s, "x");
     free((char*)s);
     sb_destroy(sb);
-}
+})
 
-void test_sb_destroy_null(void) { sb_destroy(NULL); }
+TEST_CASE(test_sb_destroy_null, { sb_destroy(NULL); })
 
 int main(void) {
     START_SUITE;

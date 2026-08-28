@@ -16,7 +16,7 @@ typedef struct queue {
     int* data;
 } queue;
 
-void test_qa_fifo_order(void) {
+TEST_CASE(test_qa_fifo_order, {
     queue q    = qa_init(queue, 5);
     int vals[] = {10, 20, 30, 40, 50};
     for (int i = 0; i < 5; i++) ASSERT_TRUE(qa_push(q, vals[i]));
@@ -28,9 +28,9 @@ void test_qa_fifo_order(void) {
     }
     ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
-}
+})
 
-void test_qa_is_empty(void) {
+TEST_CASE(test_qa_is_empty, {
     queue q = qa_init(queue, 4);
     ASSERT_TRUE(qa_is_empty(q));
     qa_push(q, 1);
@@ -40,9 +40,9 @@ void test_qa_is_empty(void) {
     (void)out;
     ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
-}
+})
 
-void test_qa_is_full(void) {
+TEST_CASE(test_qa_is_full, {
     queue q = qa_init(queue, 3);
     ASSERT_TRUE(qa_push(q, 1));
     ASSERT_TRUE(qa_push(q, 2));
@@ -51,9 +51,9 @@ void test_qa_is_full(void) {
     ASSERT_FALSE(qa_push(q, 4));
     ASSERT_CMP(qa_size(q), (size_t)3);
     qa_destroy(q);
-}
+})
 
-void test_qa_front_back(void) {
+TEST_CASE(test_qa_front_back, {
     queue q = qa_init(queue, 4);
     qa_push(q, 11);
     qa_push(q, 22);
@@ -66,9 +66,9 @@ void test_qa_front_back(void) {
     ASSERT_CMP(b, 33);
     ASSERT_CMP(qa_size(q), (size_t)3); /* peek must not modify size */
     qa_destroy(q);
-}
+})
 
-void test_qa_circular_wrap(void) {
+TEST_CASE(test_qa_circular_wrap, {
     queue q = qa_init(queue, 4);
     qa_push(q, 1);
     qa_push(q, 2);
@@ -95,9 +95,9 @@ void test_qa_circular_wrap(void) {
     ASSERT_CMP(out, 6);
     ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
-}
+})
 
-void test_qa_boundary_values(void) {
+TEST_CASE(test_qa_boundary_values, {
     queue q    = qa_init(queue, 4);
     int vals[] = {0, -1, INT_MIN, INT_MAX};
     for (int i = 0; i < 4; i++) ASSERT_TRUE(qa_push(q, vals[i]));
@@ -108,9 +108,9 @@ void test_qa_boundary_values(void) {
         ASSERT_CMP(out, vals[i]);
     }
     qa_destroy(q);
-}
+})
 
-void test_qa_clear(void) {
+TEST_CASE(test_qa_clear, {
     queue q = qa_init(queue, 3);
     qa_push(q, 1);
     qa_push(q, 2);
@@ -123,26 +123,26 @@ void test_qa_clear(void) {
     ASSERT_TRUE(qa_pop(q, out));
     ASSERT_CMP(out, 99);
     qa_destroy(q);
-}
+})
 
-void test_qa_destroy(void) {
+TEST_CASE(test_qa_destroy, {
     queue q = qa_init(queue, 4);
     qa_push(q, 7);
     qa_destroy(q);
     ASSERT_CMP(q.data, NULL);
     ASSERT_CMP(q.size, (size_t)0);
     ASSERT_CMP(q.cap, (size_t)0);
-}
+})
 
-void test_qa_pop_empty(void) {
+TEST_CASE(test_qa_pop_empty, {
     queue q = qa_init(queue, 4);
     int out = 0;
     ASSERT_FALSE(qa_pop(q, out));
     ASSERT_CMP(out, 0); /* out unchanged */
     qa_destroy(q);
-}
+})
 
-void test_qa_front_back_empty(void) {
+TEST_CASE(test_qa_front_back_empty, {
     queue q = qa_init(queue, 4);
     int f = 0, b = 0;
     ASSERT_FALSE(qa_front(q, f));
@@ -150,7 +150,7 @@ void test_qa_front_back_empty(void) {
     ASSERT_CMP(f, 0); /* out unchanged */
     ASSERT_CMP(b, 0);
     qa_destroy(q);
-}
+})
 
 typedef struct {
     int id;
@@ -166,7 +166,7 @@ typedef struct {
     big_item* data;
 } queue_big;
 
-void test_qa_big_struct(void) {
+TEST_CASE(test_qa_big_struct, {
     queue_big q = qa_init(queue_big, 8);
 
     for (int i = 0; i < 8; i++) {
@@ -183,7 +183,7 @@ void test_qa_big_struct(void) {
     }
     ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
-}
+})
 
 int main(void) {
     START_SUITE;

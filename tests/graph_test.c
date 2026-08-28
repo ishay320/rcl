@@ -6,7 +6,7 @@
 
 #include "test_suite.h"
 
-void test_graph_initialization(void) {
+TEST_CASE(test_graph_initialization, {
     struct graph* g = graph_init();
     ASSERT_TRUE(g != NULL);
     ASSERT_TRUE(g->nodes != NULL);
@@ -14,9 +14,9 @@ void test_graph_initialization(void) {
     ASSERT_CMP(g->inc_id, (size_t)0);
 
     graph_free(g);
-}
+})
 
-void test_push_node(void) {
+TEST_CASE(test_push_node, {
     struct graph* g = graph_init();
     int* p          = malloc(sizeof(*p));
 
@@ -32,9 +32,9 @@ void test_push_node(void) {
 
     graph_free(g);
     free(p);
-}
+})
 
-void test_connect_nodes(void) {
+TEST_CASE(test_connect_nodes, {
     struct graph* g = graph_init();
     int* p          = malloc(sizeof(*p));
 
@@ -52,18 +52,18 @@ void test_connect_nodes(void) {
 
     graph_free(g);
     free(p);
-}
+})
 
-void test_free_graph(void) {
+TEST_CASE(test_free_graph, {
     struct graph* g = graph_init();
     int* p          = malloc(sizeof(*p));
 
     graph_node_push(g, p);
     graph_free(g);
     free(p);
-}
+})
 
-void test_graph_node_get(void) {
+TEST_CASE(test_graph_node_get, {
     struct graph* g = graph_init();
     int* p1         = malloc(sizeof(*p1));
     int* p2         = malloc(sizeof(*p2));
@@ -88,11 +88,11 @@ void test_graph_node_get(void) {
     graph_free(g);
     free(p1);
     free(p2);
-}
+})
 
 bool node_equals(struct node_i n) { return *((int*)n.data) == 42; }
 
-void test_graph_node_find(void) {
+TEST_CASE(test_graph_node_find, {
     struct graph* g = graph_init();
     int* p1         = malloc(sizeof(*p1));
     int* p2         = malloc(sizeof(*p2));
@@ -111,17 +111,17 @@ void test_graph_node_find(void) {
     graph_free(g);
     free(p1);
     free(p2);
-}
+})
 
-void test_graph_edge_creation_memory_safety(void) {
+TEST_CASE(test_graph_edge_creation_memory_safety, {
     struct graph* g = graph_init();
     ASSERT_FALSE(graph_eadge_create(g, 1, 2));
     ASSERT_CMP(array_len(g->edges), (size_t)0);
 
     graph_free(g);
-}
+})
 
-void test_graph_node_edges_get(void) {
+TEST_CASE(test_graph_node_edges_get, {
     struct graph* g = graph_init();
     int* foo        = NULL;
     size_t node_a   = graph_node_push(g, foo);
@@ -139,7 +139,7 @@ void test_graph_node_edges_get(void) {
     free(e);
 
     graph_free(g);
-}
+})
 
 int main(void) {
     START_SUITE;

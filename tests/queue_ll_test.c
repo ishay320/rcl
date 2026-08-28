@@ -10,7 +10,7 @@ typedef struct node {
     int data;
 } node;
 
-void test_qe_init(void) {
+TEST_CASE(test_qe_init, {
     node* q    = qe_init_header(node);
     queue* hdr = qe_get_header(q);
     ASSERT_TRUE(q != NULL);
@@ -18,9 +18,9 @@ void test_qe_init(void) {
     ASSERT_CMP(hdr->back, NULL);
     ASSERT_CMP(hdr->size, 0);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_push_single(void) {
+TEST_CASE(test_qe_push_single, {
     node* q = qe_init_header(node);
     int val = 7;
     ASSERT_TRUE(qe_push(q, val));
@@ -30,17 +30,17 @@ void test_qe_push_single(void) {
     ASSERT_CMP(hdr->size, 1);
     qe_clear(q);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_pop_empty(void) {
+TEST_CASE(test_qe_pop_empty, {
     node* q = qe_init_header(node);
     int out = 0xDEAD;
     ASSERT_FALSE(qe_pop(q, out));
     ASSERT_CMP(out, 0xDEAD);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_push_pop_single(void) {
+TEST_CASE(test_qe_push_pop_single, {
     node* q = qe_init_header(node);
     int val = 99;
     qe_push(q, val);
@@ -53,9 +53,9 @@ void test_qe_push_pop_single(void) {
     ASSERT_CMP(hdr->back, NULL);
     ASSERT_CMP(hdr->size, 0);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_fifo_order(void) {
+TEST_CASE(test_qe_fifo_order, {
     node* q    = qe_init_header(node);
     int vals[] = {1, 2, 3, 4, 5};
     for (int i = 0; i < 5; i++) ASSERT_TRUE(qe_push(q, vals[i]));
@@ -66,18 +66,18 @@ void test_qe_fifo_order(void) {
     }
     ASSERT_TRUE(qe_is_empty(q));
     qe_destroy_header(q);
-}
+})
 
-void test_qe_pop_exhausted(void) {
+TEST_CASE(test_qe_pop_exhausted, {
     node* q = qe_init_header(node);
     int v   = 3;
     qe_push(q, v);
     qe_pop(q, v);
     ASSERT_FALSE(qe_pop(q, v));
     qe_destroy_header(q);
-}
+})
 
-void test_qe_interleaved(void) {
+TEST_CASE(test_qe_interleaved, {
     node* q = qe_init_header(node);
     int a = 10, b = 20, c = 30, out = 0;
     qe_push(q, a);
@@ -90,9 +90,9 @@ void test_qe_interleaved(void) {
     qe_pop(q, out);
     ASSERT_CMP(out, 30);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_boundary_values(void) {
+TEST_CASE(test_qe_boundary_values, {
     node* q    = qe_init_header(node);
     int vals[] = {0, -1, INT_MIN, INT_MAX};
     for (int i = 0; i < 4; i++) ASSERT_TRUE(qe_push(q, vals[i]));
@@ -102,9 +102,9 @@ void test_qe_boundary_values(void) {
         ASSERT_CMP(out, vals[i]);
     }
     qe_destroy_header(q);
-}
+})
 
-void test_qe_front_node(void) {
+TEST_CASE(test_qe_front_node, {
     node* q  = qe_init_header(node);
     node* fn = qe_front_node(q);
     ASSERT_CMP(fn, NULL);
@@ -116,18 +116,18 @@ void test_qe_front_node(void) {
     ASSERT_CMP(qe_size(q), 1);
     qe_clear(q);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_front_back_node_single(void) {
+TEST_CASE(test_qe_front_back_node_single, {
     node* q = qe_init_header(node);
     int val = 42;
     qe_push(q, val);
     ASSERT_CMP(qe_front_node(q), qe_back_node(q));
     qe_clear(q);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_back_node(void) {
+TEST_CASE(test_qe_back_node, {
     node* q  = qe_init_header(node);
     node* bn = qe_back_node(q);
     ASSERT_CMP(bn, NULL);
@@ -139,9 +139,9 @@ void test_qe_back_node(void) {
     ASSERT_CMP(bn->data, 20);
     qe_clear(q);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_front_back_node_multi(void) {
+TEST_CASE(test_qe_front_back_node_multi, {
     node* q = qe_init_header(node);
     int a = 1, b = 2;
     qe_push(q, a);
@@ -153,9 +153,9 @@ void test_qe_front_back_node_multi(void) {
     ASSERT_TRUE(fn != bn);
     qe_clear(q);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_front(void) {
+TEST_CASE(test_qe_front, {
     node* q = qe_init_header(node);
     int out = 0;
     ASSERT_CMP(qe_front(q, out), NULL);
@@ -166,9 +166,9 @@ void test_qe_front(void) {
     ASSERT_CMP(qe_size(q), 1);
     qe_clear(q);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_back(void) {
+TEST_CASE(test_qe_back, {
     node* q = qe_init_header(node);
     int out = 0;
     ASSERT_CMP(qe_back(q, out), NULL);
@@ -180,9 +180,9 @@ void test_qe_back(void) {
     ASSERT_CMP(qe_size(q), 2);
     qe_clear(q);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_is_empty(void) {
+TEST_CASE(test_qe_is_empty, {
     node* q = qe_init_header(node);
     ASSERT_TRUE(qe_is_empty(q));
     int v = 1;
@@ -194,9 +194,9 @@ void test_qe_is_empty(void) {
     qe_clear(q);
     ASSERT_TRUE(qe_is_empty(q));
     qe_destroy_header(q);
-}
+})
 
-void test_qe_size(void) {
+TEST_CASE(test_qe_size, {
     node* q = qe_init_header(node);
     int v   = 0;
     ASSERT_CMP(qe_size(q), 0);
@@ -211,9 +211,9 @@ void test_qe_size(void) {
     qe_pop(q, v);
     ASSERT_CMP(qe_size(q), 0); /* no underflow */
     qe_destroy_header(q);
-}
+})
 
-void test_qe_clear(void) {
+TEST_CASE(test_qe_clear, {
     node* q = qe_init_header(node);
     int v   = 0;
     qe_push(q, v);
@@ -231,9 +231,9 @@ void test_qe_clear(void) {
     ASSERT_TRUE(ok);
     ASSERT_CMP(out, 77);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_for_each(void) {
+TEST_CASE(test_qe_for_each, {
     node* q    = qe_init_header(node);
     int vals[] = {10, 20, 30};
     for (int i = 0; i < 3; i++) qe_push(q, vals[i]);
@@ -242,9 +242,9 @@ void test_qe_for_each(void) {
     ASSERT_CMP(i, 3);
     qe_clear(q);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_for_each_empty(void) {
+TEST_CASE(test_qe_for_each_empty, {
     node* q   = qe_init_header(node);
     int count = 0;
     qe_for_each(q, it) {
@@ -253,9 +253,9 @@ void test_qe_for_each_empty(void) {
     }
     ASSERT_CMP(count, 0);
     qe_destroy_header(q);
-}
+})
 
-void test_qe_double_clear(void) {
+TEST_CASE(test_qe_double_clear, {
     node* q = qe_init_header(node);
     int v   = 0;
     qe_push(q, v);
@@ -264,7 +264,7 @@ void test_qe_double_clear(void) {
     ASSERT_TRUE(qe_is_empty(q));
     qe_destroy_header(q);
     qe_destroy_header(q); /* should not crash or double-free */
-}
+})
 
 int main(void) {
     START_SUITE;

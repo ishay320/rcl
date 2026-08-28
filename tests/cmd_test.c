@@ -9,25 +9,25 @@
 #include "ansi.h"
 #include "test_suite.h"
 
-void test_append(void) {
+TEST_CASE(test_append, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "echo"), "failed to append");
     ASSERT_TRUE(cmd_append(&cmd, "hello world"), "failed to append");
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test spawn real command
-void test_spawn_real(void) {
+TEST_CASE(test_spawn_real, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "true"), "failed to append");
     cmd_proc proc = {0};
     ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test for running non existing command
-void test_spawn_fail(void) {
+TEST_CASE(test_spawn_fail, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "command that is not existing"), "failed to append");
     cmd_proc proc = {0};
@@ -35,27 +35,27 @@ void test_spawn_fail(void) {
     ASSERT_CMP(errno, ENOENT, "errno should be ENOENT");
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test for running empty command
-void test_spawn_empty(void) {
+TEST_CASE(test_spawn_empty, {
     cmd_builder cmd = {0};
     cmd_proc proc   = {0};
     ASSERT_FALSE(cmd_spawn(cmd, &proc), "spawn of empty cmd_builder");
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test for destroy empty proc
-void test_destroy_empty_proc(void) {
+TEST_CASE(test_destroy_empty_proc, {
     cmd_proc proc = {0};
     cmd_destroy(&proc);
     ASSERT_CMP(proc.p_stdout[0], 0, "destroy closes pipes");
     ASSERT_CMP(proc.p_stderr[0], 0, "destroy closes pipes");
     ASSERT_CMP(proc.p_stdin[1], 0, "destroy closes pipes");
-}
+})
 
 // test read output stdout
-void test_read_output(void) {
+TEST_CASE(test_read_output, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "echo"), "failed to append");
     ASSERT_TRUE(cmd_append(&cmd, "hello world"), "failed to append");
@@ -68,10 +68,10 @@ void test_read_output(void) {
     ASSERT_CMP(buffer, "hello world\n", "str matches");
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test read output stderr
-void test_read_err(void) {
+TEST_CASE(test_read_err, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "sh"), "failed to append");
     ASSERT_TRUE(cmd_append(&cmd, "-c"), "failed to append");
@@ -85,10 +85,10 @@ void test_read_err(void) {
     ASSERT_CMP(buffer, "hello world\n", "str matches");
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test write input stdin
-void test_write_input(void) {
+TEST_CASE(test_write_input, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "cat"), "failed to append");
     cmd_proc proc = {0};
@@ -106,10 +106,10 @@ void test_write_input(void) {
 
     cmd_destroy(&proc);
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test status returned wait for end of proc
-void test_wait_long_commands(void) {
+TEST_CASE(test_wait_long_commands, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "sleep"), "failed to append");
     ASSERT_TRUE(cmd_append(&cmd, "0.5"), "failed to append");
@@ -120,10 +120,10 @@ void test_wait_long_commands(void) {
     ASSERT_TRUE(cmd_wait(&proc, &status, 0), "exit code");
     ASSERT_CMP(status, 0, "exit code should be 0");
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test wait is shorter then the command
-void test_wait_partial_long_commands(void) {
+TEST_CASE(test_wait_partial_long_commands, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "sleep"), "failed to append");
     ASSERT_TRUE(cmd_append(&cmd, "0.5"), "failed to append");
@@ -133,10 +133,10 @@ void test_wait_partial_long_commands(void) {
     ASSERT_CMP(status, 69, "exit code should be unchanged");
     ASSERT_FALSE(cmd_wait(&proc, &status, 50), "exit code");
     cmd_builder_destroy(&cmd);
-}
+})
 
 // test that the return value is correct
-void test_return_status(void) {
+TEST_CASE(test_return_status, {
     cmd_builder cmd_t = {0};
     ASSERT_TRUE(cmd_append(&cmd_t, "true"), "failed to append");
     cmd_proc proc_t = {0};
@@ -157,10 +157,10 @@ void test_return_status(void) {
     ASSERT_CMP(status, 1, "output status of true will be 0");
     cmd_destroy(&proc_f);
     cmd_destroy(&proc_f);
-}
+})
 
 // test running couple of command together at the same time
-void test_spawn_procs_together(void) {
+TEST_CASE(test_spawn_procs_together, {
     const int count = 10;
     cmd_proc procs[count];
     memset(procs, 0, count * sizeof(*procs));
@@ -174,10 +174,10 @@ void test_spawn_procs_together(void) {
     for (int i = 0; i < count; ++i) {
         cmd_destroy(&procs[i]);
     }
-}
+})
 
 // test the io of running together cmds
-void test_spawn_procs_together_io(void) {
+TEST_CASE(test_spawn_procs_together_io, {
     const int count = 10;
     cmd_proc procs[count];
     memset(procs, 0, count * sizeof(*procs));
@@ -200,7 +200,7 @@ void test_spawn_procs_together_io(void) {
         ASSERT_CMP(buffer, test_buffer, "str io not match");
         cmd_destroy(&procs[i]);
     }
-}
+})
 
 // TODO: Implement this:
 // test_argument_spliting

@@ -22,7 +22,7 @@ typedef struct {
     char** data;
 } da_s;
 
-void test_da_i_append(void) {
+TEST_CASE(test_da_i_append, {
     da_i arr   = {0};
     int vals[] = {10, 20, 30, 40, 50};
     for (int i = 0; i < 5; i++) ASSERT_TRUE(da_append(arr, vals[i]));
@@ -32,9 +32,9 @@ void test_da_i_append(void) {
     for (int i = 0; i < 5; i++) ASSERT_CMP(arr.data[i], vals[i]);
 
     da_destroy(&arr);
-}
+})
 
-void test_da_s_append_counting(void) {
+TEST_CASE(test_da_s_append_counting, {
     da_s arr = {0};
     ASSERT_TRUE(da_append(arr, "test one size"));
 
@@ -43,9 +43,9 @@ void test_da_s_append_counting(void) {
     ASSERT_CMP(arr.data[0], "test one size");
 
     da_destroy(&arr);
-}
+})
 
-void test_da_i_double_destroy(void) {
+TEST_CASE(test_da_i_double_destroy, {
     da_i arr = {0};
     da_append(arr, 1);
     da_destroy(&arr);
@@ -53,16 +53,16 @@ void test_da_i_double_destroy(void) {
     ASSERT_CMP(arr.size, (size_t)0);
     ASSERT_CMP(arr.capacity, (size_t)0);
     da_destroy(&arr);
-}
+})
 
-void test_da_p_empty(void) {
+TEST_CASE(test_da_p_empty, {
     da_p empty = {0};
     ASSERT_CMP(empty.size, (size_t)0);
     ASSERT_CMP(empty.capacity, (size_t)0);
     da_destroy(&empty);
-}
+})
 
-void test_da_p_append(void) {
+TEST_CASE(test_da_p_append, {
     da_p arr = {0};
     int a = 1, b = 2, c = 3;
     void* vals[] = {&a, &b, &c};
@@ -73,18 +73,18 @@ void test_da_p_append(void) {
 
     da_destroy(&arr);
     ASSERT_CMP(arr.data, NULL);
-}
+})
 
-void test_da_i_single_element(void) {
+TEST_CASE(test_da_i_single_element, {
     da_i arr = {0};
     ASSERT_TRUE(da_append(arr, 42));
     ASSERT_CMP(arr.size, (size_t)1);
     ASSERT_CMP(arr.capacity, (size_t)DA_INITIAL_CAPACITY);
     ASSERT_CMP(arr.data[0], 42);
     da_destroy(&arr);
-}
+})
 
-void test_da_i_reuse_after_destroy(void) {
+TEST_CASE(test_da_i_reuse_after_destroy, {
     da_i arr = {0};
     for (int i = 0; i < 5; i++) da_append(arr, i * 10);
     da_destroy(&arr);
@@ -96,9 +96,9 @@ void test_da_i_reuse_after_destroy(void) {
     ASSERT_CMP(arr.data[2], 102);
 
     da_destroy(&arr);
-}
+})
 
-void test_da_i_capacity_growth(void) {
+TEST_CASE(test_da_i_capacity_growth, {
     da_i arr = {0};
     for (int i = 0; i < 50; i++) da_append(arr, i);
 
@@ -109,9 +109,9 @@ void test_da_i_capacity_growth(void) {
     ASSERT_CMP(arr.data[49], 49);
 
     da_destroy(&arr);
-}
+})
 
-void test_da_i_boundary_values(void) {
+TEST_CASE(test_da_i_boundary_values, {
     da_i arr   = {0};
     int vals[] = {0, -1, -100, INT_MIN, INT_MAX};
     for (int i = 0; i < 5; i++) ASSERT_TRUE(da_append(arr, vals[i]));
@@ -120,9 +120,9 @@ void test_da_i_boundary_values(void) {
     for (int i = 0; i < 5; i++) ASSERT_CMP(arr.data[i], vals[i]);
 
     da_destroy(&arr);
-}
+})
 
-void test_da_i_reserve(void) {
+TEST_CASE(test_da_i_reserve, {
     da_i arr = {0};
     ASSERT_TRUE(da_reserve(arr, 100));
     ASSERT_CMP(arr.capacity, (size_t)100);
@@ -136,7 +136,7 @@ void test_da_i_reserve(void) {
     ASSERT_CMP(arr.data[0], 42);
 
     da_destroy(&arr);
-}
+})
 
 int main(void) {
     START_SUITE;

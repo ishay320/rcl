@@ -5,7 +5,7 @@
 
 #include "test_suite.h"
 
-void test_sv_string_to_string_view(void) {
+TEST_CASE(test_sv_string_to_string_view, {
     char* s        = "hello";
     string_view sv = sv_string_to_string_view(s);
     ASSERT_CMP(sv.size, (size_t)5);
@@ -13,9 +13,9 @@ void test_sv_string_to_string_view(void) {
 
     string_view empty = sv_string_to_string_view("");
     ASSERT_CMP(empty.size, (size_t)0);
-}
+})
 
-void test_sv_substring(void) {
+TEST_CASE(test_sv_substring, {
     string_view sv = sv_string_to_string_view("hello world");
 
     string_view head = sv_substring(sv, 0, 5);
@@ -28,9 +28,9 @@ void test_sv_substring(void) {
 
     string_view zero = sv_substring(sv, 3, 3);
     ASSERT_CMP(zero.size, (size_t)0);
-}
+})
 
-void test_sv_trim_left(void) {
+TEST_CASE(test_sv_trim_left, {
     string_view sv = sv_string_to_string_view("hello");
 
     string_view trimmed = sv_trim_left(sv, 2);
@@ -42,9 +42,9 @@ void test_sv_trim_left(void) {
 
     string_view all = sv_trim_left(sv, 5);
     ASSERT_CMP(all.size, (size_t)0);
-}
+})
 
-void test_sv_trim_right(void) {
+TEST_CASE(test_sv_trim_right, {
     string_view sv = sv_string_to_string_view("hello");
 
     string_view trimmed = sv_trim_right(sv, 2);
@@ -56,9 +56,9 @@ void test_sv_trim_right(void) {
 
     string_view all = sv_trim_right(sv, 5);
     ASSERT_CMP(all.size, (size_t)0);
-}
+})
 
-void test_sv_starts_with(void) {
+TEST_CASE(test_sv_starts_with, {
     string_view sv      = sv_string_to_string_view("hello world");
     string_view match   = sv_string_to_string_view("hello");
     string_view nomatch = sv_string_to_string_view("world");
@@ -68,9 +68,9 @@ void test_sv_starts_with(void) {
     ASSERT_FALSE(sv_starts_with(sv, nomatch));
     ASSERT_TRUE(sv_starts_with(sv, empty));
     ASSERT_TRUE(sv_starts_with(sv, sv));
-}
+})
 
-void test_sv_ends_with(void) {
+TEST_CASE(test_sv_ends_with, {
     string_view sv      = sv_string_to_string_view("hello world");
     string_view match   = sv_string_to_string_view("world");
     string_view nomatch = sv_string_to_string_view("hello");
@@ -80,9 +80,9 @@ void test_sv_ends_with(void) {
     ASSERT_FALSE(sv_ends_with(sv, nomatch));
     ASSERT_TRUE(sv_ends_with(sv, empty));
     ASSERT_TRUE(sv_ends_with(sv, sv));
-}
+})
 
-void test_sv_copy(void) {
+TEST_CASE(test_sv_copy, {
     string_view sv = sv_string_to_string_view("hello");
     char buf[16]   = {0};
 
@@ -91,9 +91,9 @@ void test_sv_copy(void) {
 
     char small[3] = {0};
     ASSERT_FALSE(sv_copy(sv, small, sizeof(small)));
-}
+})
 
-void test_sv_compare(void) {
+TEST_CASE(test_sv_compare, {
     string_view a      = sv_string_to_string_view("abc");
     string_view same   = sv_string_to_string_view("abc");
     string_view after  = sv_string_to_string_view("abd");
@@ -104,7 +104,7 @@ void test_sv_compare(void) {
     ASSERT_TRUE(sv_compare(after, a) > 0);
     ASSERT_TRUE(sv_compare(short_, a) < 0);
     ASSERT_TRUE(sv_compare(a, short_) > 0);
-}
+})
 
 int main(void) {
     START_SUITE;

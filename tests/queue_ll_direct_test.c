@@ -16,14 +16,14 @@ typedef struct {
     int size;
 } queue;
 
-void test_qd_init(void) {
+TEST_CASE(test_qd_init, {
     queue q = {0};
     ASSERT_CMP(q.front, NULL);
     ASSERT_CMP(q.back, NULL);
     ASSERT_CMP(q.size, 0);
-}
+})
 
-void test_qd_push_single(void) {
+TEST_CASE(test_qd_push_single, {
     queue q = {0};
     int val = 7;
     ASSERT_TRUE(qd_push(&q, val));
@@ -31,16 +31,16 @@ void test_qd_push_single(void) {
     ASSERT_CMP(q.front, q.back);
     ASSERT_CMP(q.size, 1);
     qd_clear(&q);
-}
+})
 
-void test_qd_pop_empty(void) {
+TEST_CASE(test_qd_pop_empty, {
     queue q = {0};
     int out = 0xDEAD;
     ASSERT_FALSE(qd_pop(&q, out));
     ASSERT_CMP(out, 0xDEAD);
-}
+})
 
-void test_qd_push_pop_single(void) {
+TEST_CASE(test_qd_push_pop_single, {
     queue q = {0};
     int val = 99;
     qd_push(&q, val);
@@ -51,9 +51,9 @@ void test_qd_push_pop_single(void) {
     ASSERT_CMP(q.front, NULL);
     ASSERT_CMP(q.back, NULL);
     ASSERT_CMP(q.size, 0);
-}
+})
 
-void test_qd_fifo_order(void) {
+TEST_CASE(test_qd_fifo_order, {
     queue q    = {0};
     int vals[] = {1, 2, 3, 4, 5};
     for (int i = 0; i < 5; i++) ASSERT_TRUE(qd_push(&q, vals[i]));
@@ -63,17 +63,17 @@ void test_qd_fifo_order(void) {
         ASSERT_CMP(out, vals[i]);
     }
     ASSERT_TRUE(qd_is_empty(&q));
-}
+})
 
-void test_qd_pop_exhausted(void) {
+TEST_CASE(test_qd_pop_exhausted, {
     queue q = {0};
     int v   = 3;
     qd_push(&q, v);
     qd_pop(&q, v);
     ASSERT_FALSE(qd_pop(&q, v));
-}
+})
 
-void test_qd_interleaved(void) {
+TEST_CASE(test_qd_interleaved, {
     queue q = {0};
     int a = 10, b = 20, c = 30, out = 0;
     qd_push(&q, a);
@@ -85,9 +85,9 @@ void test_qd_interleaved(void) {
     ASSERT_CMP(out, 20);
     qd_pop(&q, out);
     ASSERT_CMP(out, 30);
-}
+})
 
-void test_qd_boundary_values(void) {
+TEST_CASE(test_qd_boundary_values, {
     queue q    = {0};
     int vals[] = {0, -1, INT_MIN, INT_MAX};
     for (int i = 0; i < 4; i++) ASSERT_TRUE(qd_push(&q, vals[i]));
@@ -96,9 +96,9 @@ void test_qd_boundary_values(void) {
         ASSERT_TRUE(qd_pop(&q, out));
         ASSERT_CMP(out, vals[i]);
     }
-}
+})
 
-void test_qd_front_node(void) {
+TEST_CASE(test_qd_front_node, {
     queue q  = {0};
     node* fn = q.front;
     ASSERT_CMP(fn, NULL);
@@ -109,17 +109,17 @@ void test_qd_front_node(void) {
     ASSERT_CMP(fn->data, 55);
     ASSERT_CMP(qd_size(&q), 1);
     qd_clear(&q);
-}
+})
 
-void test_qd_front_back_node_single(void) {
+TEST_CASE(test_qd_front_back_node_single, {
     queue q = {0};
     int val = 42;
     qd_push(&q, val);
     ASSERT_CMP(q.front, q.back);
     qd_clear(&q);
-}
+})
 
-void test_qd_back_node(void) {
+TEST_CASE(test_qd_back_node, {
     queue q  = {0};
     node* bn = q.back;
     ASSERT_CMP(bn, NULL);
@@ -130,9 +130,9 @@ void test_qd_back_node(void) {
     ASSERT_TRUE(bn != NULL);
     ASSERT_CMP(bn->data, 20);
     qd_clear(&q);
-}
+})
 
-void test_qd_front_back_node_multi(void) {
+TEST_CASE(test_qd_front_back_node_multi, {
     queue q = {0};
     int a = 1, b = 2;
     qd_push(&q, a);
@@ -143,9 +143,9 @@ void test_qd_front_back_node_multi(void) {
     ASSERT_CMP(bn->data, 2);
     ASSERT_TRUE(fn != bn);
     qd_clear(&q);
-}
+})
 
-void test_qd_front(void) {
+TEST_CASE(test_qd_front, {
     queue q = {0};
     int out = 0;
     ASSERT_CMP(qd_front(&q, out), NULL);
@@ -155,9 +155,9 @@ void test_qd_front(void) {
     ASSERT_CMP(out, 77);
     ASSERT_CMP(qd_size(&q), 1);
     qd_clear(&q);
-}
+})
 
-void test_qd_back(void) {
+TEST_CASE(test_qd_back, {
     queue q = {0};
     int out = 0;
     ASSERT_CMP(qd_back(&q, out), NULL);
@@ -168,9 +168,9 @@ void test_qd_back(void) {
     ASSERT_CMP(out, 20);
     ASSERT_CMP(qd_size(&q), 2);
     qd_clear(&q);
-}
+})
 
-void test_qd_is_empty(void) {
+TEST_CASE(test_qd_is_empty, {
     queue q = {0};
     ASSERT_TRUE(qd_is_empty(&q));
     int v = 1;
@@ -181,9 +181,9 @@ void test_qd_is_empty(void) {
     qd_push(&q, v);
     qd_clear(&q);
     ASSERT_TRUE(qd_is_empty(&q));
-}
+})
 
-void test_qd_size(void) {
+TEST_CASE(test_qd_size, {
     queue q = {0};
     int v   = 0;
     ASSERT_CMP(qd_size(&q), 0);
@@ -197,9 +197,9 @@ void test_qd_size(void) {
     ASSERT_CMP(qd_size(&q), 0);
     qd_pop(&q, v);
     ASSERT_CMP(qd_size(&q), 0); /* no underflow */
-}
+})
 
-void test_qd_clear(void) {
+TEST_CASE(test_qd_clear, {
     queue q = {0};
     int v   = 0;
     qd_push(&q, v);
@@ -215,16 +215,16 @@ void test_qd_clear(void) {
     qd_pop(&q, out);
     ASSERT_TRUE(ok);
     ASSERT_CMP(out, 77);
-}
+})
 
-void test_qd_double_clear(void) {
+TEST_CASE(test_qd_double_clear, {
     queue q = {0};
     int v   = 0;
     qd_push(&q, v);
     qd_clear(&q);
     qd_clear(&q); /* should not crash or leak */
     ASSERT_TRUE(qd_is_empty(&q));
-}
+})
 
 int main(void) {
     START_SUITE;
