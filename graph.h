@@ -52,7 +52,7 @@ size_t graph_nodes_count(struct graph* g) { return array_len(g->nodes); }
 
 size_t graph_edges_count(struct graph* g) { return array_len(g->edges); }
 
-bool graph_eadge_create(struct graph* g, size_t node_id_from, size_t node_id_to) {
+bool graph_edge_create(struct graph* g, size_t node_id_from, size_t node_id_to) {
     if (node_id_to == node_id_from || node_id_from > g->inc_id || node_id_to > g->inc_id) {
         return false;
     }
@@ -104,7 +104,8 @@ struct node_i* graph_node_find(struct graph* g, bool (*equals)(struct node_i)) {
     return NULL;
 }
 
-struct edge* graph_node_edges_get(const struct graph* g, size_t node_id_from, size_t* output_array_len) {
+struct edge* graph_node_edges_get(const struct graph* g, size_t node_id_from,
+                                  size_t* output_array_len) {
     // TODO: make this better
     struct edge* edges = array_init(struct edge);
     for (size_t i = 0; i < array_len(g->edges); i++) {

@@ -3,187 +3,153 @@
 
 #include "test_suite.h"
 
-TEST_CASE(test_array_initialization, {
-    int* arr = array_init(int);
-    ASSERT_TRUE(arr != NULL);
-    array_free(arr);
-})
-
-TEST_CASE(test_array_init_sized, {
-    int* arr = array_init_sized(int, 10);
-    ASSERT_TRUE(arr != NULL);
-    struct array* header = array_get_header(arr);
-    ASSERT_CMP(header->cap, (size_t)10);
-    array_free(arr);
-})
-
-TEST_CASE(test_array_push_rval, {
-    int* arr = array_init(int);
-    array_push_rval(arr, 42);
-    struct array* header = array_get_header(arr);
-    ASSERT_CMP(header->len, (size_t)1);
-    ASSERT_CMP(arr[0], 42);
-    array_free(arr);
-})
-
-TEST_CASE(test_array_push, {
-    int* arr = array_init(int);
-    int item = 42;
-    array_push(arr, item);
-    struct array* header = array_get_header(arr);
-    ASSERT_CMP(header->len, (size_t)1);
-    ASSERT_CMP(arr[0], 42);
-    array_free(arr);
-})
-
-TEST_CASE(test_array_resizing_dynamicly, {
-    int* arr = array_init(int);
-    for (int i = 0; i < 100; i++) {
-        array_push(arr, i);
-    }
-    struct array* header = array_get_header(arr);
-    ASSERT_TRUE(header->cap >= 100);
-    ASSERT_CMP(header->len, (size_t)100);
-    for (int i = 0; i < 100; i++) {
-        ASSERT_CMP(arr[i], i);
-    }
-    array_free(arr);
-})
-
-TEST_CASE(test_array_free, {
-    int* arr = array_init(int);
-    array_push_rval(arr, 10);
-    array_free(arr);
-})
-
-TEST_CASE(test_array_cap, {
-    int* arr             = array_init_sized(int, 50);
-    struct array* header = array_get_header(arr);
-    ASSERT_CMP(array_cap(arr), header->cap);
-    ASSERT_CMP(header->cap, (size_t)50);
-    array_free(arr);
-})
-
-TEST_CASE(test_array_len, {
-    int* arr = array_init(int);
-    ASSERT_CMP(array_len(arr), (size_t)0);
-
-    array_push_rval(arr, 42);
-    ASSERT_CMP(array_len(arr), (size_t)1);
-
-    array_push_rval(arr, 100);
-    ASSERT_CMP(array_len(arr), (size_t)2);
-
-    array_free(arr);
-})
-
-TEST_CASE(test_array_stride, {
-    int* int_arr = array_init(int);
-    ASSERT_CMP(array_stride(int_arr), sizeof(int));
-
-    double* double_arr = array_init(double);
-    ASSERT_CMP(array_stride(double_arr), sizeof(double));
-
-    array_free(int_arr);
-    array_free(double_arr);
-})
-
-TEST_CASE(test_array_reserve, {
-    int* array = array_init(int);
-    ASSERT_TRUE(array_reserve(array, 10));
-    ASSERT_CMP(array_cap(array), (size_t)10);
-    ASSERT_TRUE(array_reserve(array, 5));
-    ASSERT_CMP(array_cap(array), (size_t)10);
-    ASSERT_TRUE(array_reserve(array, 30));
-    ASSERT_CMP(array_cap(array), (size_t)30);
-
-    array_free(array);
-})
-
-TEST_CASE(test_array_resize, {
-    int* array = array_init(int);
-    ASSERT_TRUE(array_resize(array, 10));
-    ASSERT_CMP(array_cap(array), (size_t)10);
-    ASSERT_TRUE(array_resize(array, 7));
-    ASSERT_CMP(array_cap(array), (size_t)7);
-    ASSERT_TRUE(array_resize(array, 30));
-    ASSERT_CMP(array_cap(array), (size_t)30);
-
-    array_free(array);
-})
-
 typedef struct {
     int id;
     float value;
     char tag[8];
 } test_item_t;
 
-TEST_CASE(test_array_remove_index, {
-    int* array = array_init(int);
+TEST_CASE(test_array_init_sets_metadata, {
+    int* arr = array_init_sized(int, 10);
+    ASSERT_TRUE(arr != NULL);
+    ASSERT_CMP(array_cap(arr), (size_t)10);
+    ASSERT_CMP(array_len(arr), (size_t)0);
+    ASSERT_CMP(array_stride(arr), sizeof(int));
+    array_free(arr);
 
-    array_push_rval(array, 12);
-    ASSERT_CMP(array_len(array), (size_t)1);
-    array_remove_index(array, 0);
-    ASSERT_CMP(array_len(array), (size_t)0);
+    test_item_t* structs = array_init(test_item_t);
+    ASSERT_TRUE(structs != NULL);
+    ASSERT_CMP(array_cap(structs), (size_t)1, "array_init starts with capacity 1");
+    ASSERT_CMP(array_stride(structs), sizeof(test_item_t));
+    array_free(structs);
+})
 
-    array_push_rval(array, 42);
-    array_push_rval(array, 52);
-    array_push_rval(array, 22);
-    ASSERT_CMP(array[0], 42);
-    ASSERT_CMP(array_len(array), (size_t)3);
+TEST_CASE(test_array_push_lvalue_and_rvalue, {
+    int* arr = array_init(int);
+    int lval = 42;
+    ASSERT_TRUE(array_push(arr, lval));
+    ASSERT_TRUE(array_push_rval(arr, 10 + 3), "push_rval must accept temporaries");
+    ASSERT_CMP(array_len(arr), (size_t)2);
+    ASSERT_CMP(arr[0], 42);
+    ASSERT_CMP(arr[1], 13);
+    array_free(arr);
+})
 
-    array_remove_index(array, 0);
-    ASSERT_CMP(array_len(array), (size_t)2);
-    ASSERT_CMP(array[0], 52);
+TEST_CASE(test_array_capacity_doubles_when_full, {
+    int* arr = array_init(int);
+    for (int i = 0; i < 100; i++) ASSERT_TRUE(array_push_rval(arr, i));
 
-    array_push_rval(array, 25);
-    ASSERT_CMP(array_len(array), (size_t)3);
-    ASSERT_CMP(array[2], 25);
-    array_remove_index(array, 0);
-    ASSERT_CMP(array[1], 25);
-    ASSERT_CMP(array_len(array), (size_t)2);
+    ASSERT_CMP(array_len(arr), (size_t)100);
+    ASSERT_CMP(array_cap(arr), (size_t)128, "1 -> 2 -> 4 -> ... -> 128");
+    for (int i = 0; i < 100; i++) ASSERT_CMP(arr[i], i);
+    array_free(arr);
+})
 
-    array_free(array);
+TEST_CASE(test_array_reserve_only_grows, {
+    int* arr = array_init(int);
+    ASSERT_TRUE(array_reserve(arr, 10));
+    ASSERT_CMP(array_cap(arr), (size_t)10);
+    ASSERT_CMP(array_len(arr), (size_t)0, "reserve must not change length");
 
-    test_item_t* sarr = array_init(test_item_t);
-    test_item_t a     = {.id = 1, .value = 1.0f, .tag = "one"};
-    test_item_t b     = {.id = 2, .value = 2.0f, .tag = "two"};
-    test_item_t c     = {.id = 3, .value = 3.0f, .tag = "three"};
-    array_push(sarr, a);
-    array_push(sarr, b);
-    array_push(sarr, c);
+    ASSERT_TRUE(array_reserve(arr, 5));
+    ASSERT_CMP(array_cap(arr), (size_t)10, "smaller reserve is a no-op");
+    ASSERT_TRUE(array_reserve(arr, 30));
+    ASSERT_CMP(array_cap(arr), (size_t)30);
+    array_free(arr);
+})
 
-    array_remove_index(sarr, 1);
-    ASSERT_CMP(array_len(sarr), (size_t)2);
-    ASSERT_CMP(sarr[0].id, 1);
-    ASSERT_CMP(sarr[1].id, 3);
-    ASSERT_CMP(sarr[1].value, 3.0f);
+TEST_CASE(test_array_resize_shrink_clamps_len, {
+    int* arr = array_init(int);
+    for (int i = 0; i < 5; i++) array_push_rval(arr, i * 10);
 
-    array_remove_index(sarr, 0);
-    ASSERT_CMP(array_len(sarr), (size_t)1);
-    ASSERT_CMP(sarr[0].id, 3);
-    ASSERT_CMP(sarr[0].value, 3.0f);
+    ASSERT_TRUE(array_resize(arr, 30));
+    ASSERT_CMP(array_cap(arr), (size_t)30);
+    ASSERT_CMP(array_len(arr), (size_t)5, "growing must not change length");
 
-    array_remove_index(sarr, 0);
-    ASSERT_CMP(array_len(sarr), (size_t)0);
+    ASSERT_TRUE(array_resize(arr, 3));
+    ASSERT_CMP(array_cap(arr), (size_t)3);
+    ASSERT_CMP(array_len(arr), (size_t)3, "shrinking clamps length to the new capacity");
+    for (int i = 0; i < 3; i++) ASSERT_CMP(arr[i], i * 10);
 
-    array_free(sarr);
+    array_free(arr);
+})
+
+TEST_CASE(test_array_push_grows_from_zero_capacity, {
+    int* arr = array_init_sized(int, 0);
+    ASSERT_TRUE(arr != NULL);
+    ASSERT_CMP(array_cap(arr), (size_t)0);
+
+    ASSERT_TRUE(array_push_rval(arr, 7));
+    ASSERT_CMP(array_len(arr), (size_t)1);
+    ASSERT_CMP(arr[0], 7);
+
+    ASSERT_TRUE(array_resize(arr, 0), "resize to zero is allowed");
+    ASSERT_CMP(array_len(arr), (size_t)0);
+    ASSERT_TRUE(array_push_rval(arr, 9), "push after resize to zero must reallocate");
+    ASSERT_CMP(arr[0], 9);
+
+    array_free(arr);
+})
+
+TEST_CASE(test_array_remove_index_preserves_order, {
+    int* arr = array_init(int);
+    for (int i = 0; i < 5; i++) array_push_rval(arr, i * 10); /* {0,10,20,30,40} */
+
+    array_remove_index(arr, 1); /* middle -> {0,20,30,40} */
+    ASSERT_CMP(array_len(arr), (size_t)4);
+    ASSERT_CMP(arr[0], 0);
+    ASSERT_CMP(arr[1], 20);
+    ASSERT_CMP(arr[3], 40);
+
+    array_remove_index(arr, 3); /* last -> {0,20,30} */
+    ASSERT_CMP(array_len(arr), (size_t)3);
+    ASSERT_CMP(arr[2], 30);
+
+    array_remove_index(arr, 0); /* first -> {20,30} */
+    ASSERT_CMP(array_len(arr), (size_t)2);
+    ASSERT_CMP(arr[0], 20);
+
+    array_remove_index(arr, 0);
+    array_remove_index(arr, 0);
+    ASSERT_CMP(array_len(arr), (size_t)0, "array can be emptied via remove");
+
+    array_push_rval(arr, 99); /* still usable after removing everything */
+    ASSERT_CMP(arr[0], 99);
+
+    array_free(arr);
+})
+
+TEST_CASE(test_array_struct_elements, {
+    test_item_t* arr = array_init(test_item_t);
+    test_item_t a    = {.id = 1, .value = 1.5f, .tag = "one"};
+    test_item_t b    = {.id = 2, .value = 2.5f, .tag = "two"};
+    test_item_t c    = {.id = 3, .value = 3.5f, .tag = "three"};
+    ASSERT_TRUE(array_push(arr, a));
+    ASSERT_TRUE(array_push(arr, b));
+    ASSERT_TRUE(array_push(arr, c));
+
+    ASSERT_CMP(arr[1].id, 2);
+    ASSERT_CMP(arr[1].value, 2.5f);
+    ASSERT_CMP(arr[2].tag, "three");
+
+    array_remove_index(arr, 1);
+    ASSERT_CMP(array_len(arr), (size_t)2);
+    ASSERT_CMP(arr[0].id, 1);
+    ASSERT_CMP(arr[1].id, 3);
+    ASSERT_CMP(arr[1].tag, "three");
+
+    array_free(arr);
 })
 
 int main(void) {
     START_SUITE;
-    RUN(test_array_initialization);
-    RUN(test_array_init_sized);
-    RUN(test_array_push_rval);
-    RUN(test_array_push);
-    RUN(test_array_resizing_dynamicly);
-    RUN(test_array_free);
-    RUN(test_array_cap);
-    RUN(test_array_len);
-    RUN(test_array_stride);
-    RUN(test_array_resize);
-    RUN(test_array_reserve);
-    RUN(test_array_remove_index);
+    RUN(test_array_init_sets_metadata);
+    RUN(test_array_push_lvalue_and_rvalue);
+    RUN(test_array_capacity_doubles_when_full);
+    RUN(test_array_reserve_only_grows);
+    RUN(test_array_resize_shrink_clamps_len);
+    RUN(test_array_push_grows_from_zero_capacity);
+    RUN(test_array_remove_index_preserves_order);
+    RUN(test_array_struct_elements);
     END_SUITE;
-    return 0;
 }

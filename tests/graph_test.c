@@ -2,155 +2,120 @@
 
 #include <stddef.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "test_suite.h"
 
-TEST_CASE(test_graph_initialization, {
+TEST_CASE(test_node_push_and_get, {
     struct graph* g = graph_init();
-    ASSERT_TRUE(g != NULL);
-    ASSERT_TRUE(g->nodes != NULL);
-    ASSERT_TRUE(g->edges != NULL);
-    ASSERT_CMP(g->inc_id, (size_t)0);
+    ASSERT_CMP(graph_nodes_count(g), (size_t)0, "new graph has no nodes");
+    ASSERT_CMP(graph_edges_count(g), (size_t)0, "new graph has no edges");
+
+    int a = 1, b = 2;
+    size_t id_a = graph_node_push(g, &a);
+    size_t id_b = graph_node_push(g, &b);
+    ASSERT_TRUE(id_a != id_b, "every node gets a unique id");
+    ASSERT_CMP(graph_nodes_count(g), (size_t)2);
+
+    struct node_i* n = graph_node_get(g, id_a);
+    ASSERT_TRUE(n != NULL);
+    ASSERT_CMP(n->id, id_a);
+    ASSERT_CMP(n->data, &a);
+
+    n = graph_node_get(g, id_b);
+    ASSERT_TRUE(n != NULL);
+    ASSERT_CMP(n->data, &b);
+
+    ASSERT_CMP(graph_node_get(g, 999), NULL, "unknown id");
 
     graph_free(g);
 })
 
-TEST_CASE(test_push_node, {
+TEST_CASE(test_edge_create_between_existing_nodes, {
     struct graph* g = graph_init();
-    int* p          = malloc(sizeof(*p));
+    int a           = 0;
+    size_t id_a     = graph_node_push(g, &a);
+    size_t id_b     = graph_node_push(g, &a);
 
-    size_t id1 = graph_node_push(g, p);
-    size_t id2 = graph_node_push(g, p);
+    ASSERT_TRUE(graph_edge_create(g, id_a, id_b));
+    ASSERT_CMP(graph_edges_count(g), (size_t)1);
+    ASSERT_CMP(g->edges[0].id_node_from, id_a);
+    ASSERT_CMP(g->edges[0].id_node_to, id_b);
 
-    ASSERT_CMP(array_len(g->nodes), (size_t)2);
-    ASSERT_CMP(g->nodes[0].id, id1);
-    ASSERT_CMP(g->nodes[1].id, id2);
-
-    ASSERT_CMP(g->nodes[0].data, p);
-    ASSERT_CMP(g->nodes[1].data, p);
+    // edges are not deduplicated: an identical second edge is stored too
+    ASSERT_TRUE(graph_edge_create(g, id_a, id_b));
+    ASSERT_CMP(graph_edges_count(g), (size_t)2);
 
     graph_free(g);
-    free(p);
 })
 
-TEST_CASE(test_connect_nodes, {
+TEST_CASE(test_edge_create_rejects_self_and_unknown_nodes, {
     struct graph* g = graph_init();
-    int* p          = malloc(sizeof(*p));
+    ASSERT_FALSE(graph_edge_create(g, 0, 1), "no nodes exist yet");
 
-    size_t id1 = graph_node_push(g, p);
-    size_t id2 = graph_node_push(g, p);
-
-    ASSERT_TRUE(graph_eadge_create(g, id1, id2));
-    ASSERT_CMP(array_len(g->edges), (size_t)1);
-
-    struct edge e = g->edges[0];
-    ASSERT_CMP(e.id_node_from, id1);
-    ASSERT_CMP(e.id_node_to, id2);
-
-    ASSERT_FALSE(graph_eadge_create(g, id1, 999));
+    int a       = 0;
+    size_t id_a = graph_node_push(g, &a);
+    size_t id_b = graph_node_push(g, &a);
+    ASSERT_FALSE(graph_edge_create(g, id_a, id_a), "self edge");
+    ASSERT_FALSE(graph_edge_create(g, id_a, 999), "target id was never handed out");
+    ASSERT_FALSE(graph_edge_create(g, 999, id_b), "source id was never handed out");
+    ASSERT_FALSE(graph_edge_create(g, id_a, id_b + 1), "id just past the last node");
+    ASSERT_CMP(graph_edges_count(g), (size_t)0, "no rejected edge was stored");
 
     graph_free(g);
-    free(p);
 })
 
-TEST_CASE(test_free_graph, {
+static bool node_data_is_42(struct node_i n) { return *(int*)n.data == 42; }
+static bool node_never_matches(struct node_i n) {
+    (void)n;
+    return false;
+}
+
+TEST_CASE(test_node_find_by_predicate, {
     struct graph* g = graph_init();
-    int* p          = malloc(sizeof(*p));
+    int v1 = 42, v2 = 99;
+    graph_node_push(g, &v1);
+    graph_node_push(g, &v2);
 
-    graph_node_push(g, p);
-    graph_free(g);
-    free(p);
-})
-
-TEST_CASE(test_graph_node_get, {
-    struct graph* g = graph_init();
-    int* p1         = malloc(sizeof(*p1));
-    int* p2         = malloc(sizeof(*p2));
-
-    size_t id1 = graph_node_push(g, p1);
-    size_t id2 = graph_node_push(g, p2);
-
-    struct node_i* n1 = graph_node_get(g, id1);
-    struct node_i* n2 = graph_node_get(g, id2);
-
-    ASSERT_TRUE(n1 != NULL);
-    ASSERT_TRUE(n2 != NULL);
-
-    ASSERT_CMP(n1->id, id1);
-    ASSERT_CMP(n2->id, id2);
-
-    ASSERT_CMP(n1->data, p1);
-    ASSERT_CMP(n2->data, p2);
-
-    ASSERT_CMP(graph_node_get(g, 999), NULL);
-
-    graph_free(g);
-    free(p1);
-    free(p2);
-})
-
-bool node_equals(struct node_i n) { return *((int*)n.data) == 42; }
-
-TEST_CASE(test_graph_node_find, {
-    struct graph* g = graph_init();
-    int* p1         = malloc(sizeof(*p1));
-    int* p2         = malloc(sizeof(*p2));
-
-    *p1 = 42;
-    *p2 = 99;
-
-    graph_node_push(g, p1);
-    graph_node_push(g, p2);
-
-    struct node_i* found = graph_node_find(g, node_equals);
-
+    struct node_i* found = graph_node_find(g, node_data_is_42);
     ASSERT_TRUE(found != NULL);
-    ASSERT_CMP(*((int*)found->data), 42);
+    ASSERT_CMP(found->data, &v1);
 
-    graph_free(g);
-    free(p1);
-    free(p2);
-})
-
-TEST_CASE(test_graph_edge_creation_memory_safety, {
-    struct graph* g = graph_init();
-    ASSERT_FALSE(graph_eadge_create(g, 1, 2));
-    ASSERT_CMP(array_len(g->edges), (size_t)0);
+    ASSERT_CMP(graph_node_find(g, node_never_matches), NULL, "no match");
 
     graph_free(g);
 })
 
-TEST_CASE(test_graph_node_edges_get, {
+TEST_CASE(test_node_edges_get_returns_only_outgoing_edges, {
     struct graph* g = graph_init();
-    int* foo        = NULL;
-    size_t node_a   = graph_node_push(g, foo);
-    size_t node_b   = graph_node_push(g, foo);
+    size_t a        = graph_node_push(g, NULL);
+    size_t b        = graph_node_push(g, NULL);
+    size_t c        = graph_node_push(g, NULL);
+    ASSERT_TRUE(graph_edge_create(g, a, b));
+    ASSERT_TRUE(graph_edge_create(g, a, c));
+    ASSERT_TRUE(graph_edge_create(g, b, c));
 
-    size_t len;
-    struct edge* e = graph_node_edges_get(g, node_a, &len);
+    size_t len         = 999;
+    struct edge* edges = graph_node_edges_get(g, a, &len);
+    ASSERT_CMP(len, (size_t)2);
+    ASSERT_CMP(edges[0].id_node_from, a);
+    ASSERT_CMP(edges[0].id_node_to, b);
+    ASSERT_CMP(edges[1].id_node_to, c);
+    free(edges);
+
+    // edges are directed: c only has incoming edges, so nothing is returned
+    edges = graph_node_edges_get(g, c, &len);
     ASSERT_CMP(len, (size_t)0);
-    free(e);
-
-    ASSERT_TRUE(graph_eadge_create(g, node_a, node_b));
-    e = graph_node_edges_get(g, node_a, &len);
-    ASSERT_CMP(len, (size_t)1);
-    ASSERT_CMP(e[0].id_node_to, node_b);
-    free(e);
+    free(edges);
 
     graph_free(g);
 })
 
 int main(void) {
     START_SUITE;
-    RUN(test_graph_initialization);
-    RUN(test_push_node);
-    RUN(test_connect_nodes);
-    RUN(test_free_graph);
-    RUN(test_graph_node_get);
-    RUN(test_graph_node_find);
-    RUN(test_graph_edge_creation_memory_safety);
-    RUN(test_graph_node_edges_get);
+    RUN(test_node_push_and_get);
+    RUN(test_edge_create_between_existing_nodes);
+    RUN(test_edge_create_rejects_self_and_unknown_nodes);
+    RUN(test_node_find_by_predicate);
+    RUN(test_node_edges_get_returns_only_outgoing_edges);
     END_SUITE;
-    return 0;
 }

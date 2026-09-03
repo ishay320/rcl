@@ -17,19 +17,19 @@ static size_t s_tests_failed = 0;
 
 /*
  * ASSERT_CMP compares a and b
- * ASSERT_FAlSE check if its false
+ * ASSERT_FALSE check if its false
  * ASSERT_TRUE check if its true
  * ASSERT_NEAR compares a and b with epsilon
  * message is optional everywhere: ASSERT_CMP(x, y) or ASSERT_CMP(x, y, "why")
  */
 
-#define TS_DEFINE_CMP_FN(name, type, fmt)                                            \
-    static inline bool name(type a, type b, char* reason_out, size_t reason_size) {  \
-        if (a == b) {                                                                \
-            return true;                                                             \
-        }                                                                            \
-        snprintf(reason_out, reason_size, "got " fmt " instead of " fmt "\n", a, b); \
-        return false;                                                                \
+#define TS_DEFINE_CMP_FN(name, type, fmt)                                           \
+    static inline bool name(type a, type b, char* reason_out, size_t reason_size) { \
+        if (a == b) {                                                               \
+            return true;                                                            \
+        }                                                                           \
+        snprintf(reason_out, reason_size, "got " fmt " instead of " fmt, a, b);     \
+        return false;                                                               \
     }
 
 TS_DEFINE_CMP_FN(ts_cmp_chr, char, "'%c'")
@@ -50,7 +50,7 @@ static inline bool ts_cmp_bool(bool a, bool b, char* reason_out, size_t reason_s
     if (a == b) {
         return true;
     }
-    snprintf(reason_out, reason_size, "got %s instead of %s\n", a ? "true" : "false",
+    snprintf(reason_out, reason_size, "got %s instead of %s", a ? "true" : "false",
              b ? "true" : "false");
     return false;
 }
@@ -59,7 +59,7 @@ static inline bool ts_cmp_str(const char* a, const char* b, char* reason_out, si
     if (a == b || (a != NULL && b != NULL && strcmp(a, b) == 0)) {
         return true;
     }
-    snprintf(reason_out, reason_size, "got \"%s\" instead of \"%s\"\n", a ? a : "(null)",
+    snprintf(reason_out, reason_size, "got \"%s\" instead of \"%s\"", a ? a : "(null)",
              b ? b : "(null)");
     return false;
 }
@@ -93,8 +93,8 @@ static inline bool ts_cmp_str(const char* a, const char* b, char* reason_out, si
     do {                                                                                \
         struct test_result tr = {                                                       \
             .failed = true, .line = __LINE__, .file = __FILE__, .message = (_message)}; \
-        strcpy(tr.reason, _reason);                                                     \
-        strcpy(tr.function, __FUNCTION__);                                              \
+        snprintf(tr.reason, sizeof(tr.reason), "%s", _reason);                          \
+        snprintf(tr.function, sizeof(tr.function), "%s", __FUNCTION__);                 \
         return tr;                                                                      \
     } while (0)
 
@@ -104,22 +104,22 @@ static inline bool ts_cmp_str(const char* a, const char* b, char* reason_out, si
         _Static_assert(TS_SAME_CMP_TYPE(a, b),                                \
                        "ASSERT_CMP: both arguments must have the same type"); \
         char reason[128];                                                     \
-        if (!TS_CMP_FN(a)((a), (b), reason, sizeof(*reason))) {               \
+        if (!TS_CMP_FN(a)((a), (b), reason, sizeof(reason))) {                \
             TS_RETURN_TEST_RESULT(message, reason);                           \
         }                                                                     \
     } while (0)
 
 #define ASSERT_NEAR(...) ASSERT_NEAR_IMPL(__VA_ARGS__, "", )
-#define ASSERT_NEAR_IMPL(a, b, eps, message, ...)                                    \
-    do {                                                                             \
-        double _a    = (double)(a);                                                  \
-        double _b    = (double)(b);                                                  \
-        double _diff = _a > _b ? _a - _b : _b - _a; /* no math.h, no -lm */          \
-        if (!(_diff <= (double)(eps))) {                                             \
-            char buff[128];                                                          \
-            sprintf(buff, "got %f instead of %f (eps %f)\n", _a, _b, (double)(eps)); \
-            TS_RETURN_TEST_RESULT(_message, buff);                                   \
-        }                                                                            \
+#define ASSERT_NEAR_IMPL(a, b, eps, _message, ...)                                                \
+    do {                                                                                          \
+        double _a    = (double)(a);                                                               \
+        double _b    = (double)(b);                                                               \
+        double _diff = _a > _b ? _a - _b : _b - _a; /* no math.h, no -lm */                       \
+        if (!(_diff <= (double)(eps))) {                                                          \
+            char buff[128];                                                                       \
+            snprintf(buff, sizeof(buff), "got %f instead of %f (eps %f)", _a, _b, (double)(eps)); \
+            TS_RETURN_TEST_RESULT(_message, buff);                                                \
+        }                                                                                         \
     } while (0)
 
 #define ASSERT_TRUE(...) ASSERT_TRUE_IMPL(__VA_ARGS__, "", )
@@ -194,18 +194,22 @@ void ts_print_failure(const struct test_result tr) {
     clock_gettime(CLOCK_MONOTONIC, &wall_start); \
     printf(AN_BOLD AN_CYAN "Running " __FILE__ " tests..." AN_RESET "\n")
 
-#define END_SUITE                                                                         \
-    do {                                                                                  \
-        double _total_ms_cpu = (double)(clock() - suite_start) * 1000.0 / CLOCKS_PER_SEC; \
-        struct timespec wall_end;                                                         \
-        clock_gettime(CLOCK_MONOTONIC, &wall_end);                                        \
-        double _total_ms_wall = (double)(wall_end.tv_sec - wall_start.tv_sec) * 1000.0 +  \
-                                (double)(wall_end.tv_nsec - wall_start.tv_nsec) / 1e6;    \
-        printf(AN_GREEN "\n%ld/%ld " __FILE__ " tests passed!" AN_RESET AN_DIM            \
-                        " (cpu: %.3f ms, wall: %.3f ms)\n" AN_RESET,                      \
-               s_tests_run - s_tests_failed, s_tests_run, _total_ms_cpu, _total_ms_wall); \
-        if (s_tests_failed > 0) printf(AN_RED "%ld tests failed\n", s_tests_failed);      \
+#define END_SUITE                                                                                \
+    do {                                                                                         \
+        double _total_ms_cpu = (double)(clock() - suite_start) * 1000.0 / CLOCKS_PER_SEC;        \
+        struct timespec wall_end;                                                                \
+        clock_gettime(CLOCK_MONOTONIC, &wall_end);                                               \
+        double _total_ms_wall = (double)(wall_end.tv_sec - wall_start.tv_sec) * 1000.0 +         \
+                                (double)(wall_end.tv_nsec - wall_start.tv_nsec) / 1e6;           \
+        printf(AN_GREEN "\n%ld/%ld " __FILE__ " tests passed!" AN_RESET AN_DIM                   \
+                        " (cpu: %.3f ms, wall: %.3f ms)\n" AN_RESET,                             \
+               s_tests_run - s_tests_failed, s_tests_run, _total_ms_cpu, _total_ms_wall);        \
+        if (s_tests_failed > 0) printf(AN_RED "%ld tests failed" AN_RESET "\n", s_tests_failed); \
+        return SUITE_EXIT_CODE;                                                                  \
     } while (0)
+
+/* return value for main: 0 when every test passed, 1 otherwise */
+#define SUITE_EXIT_CODE (s_tests_failed == 0 ? 0 : 1)
 
 #define TEST_CASE(test_name, ...) \
     struct test_result test_name(void) { __VA_ARGS__ return (struct test_result){0}; }

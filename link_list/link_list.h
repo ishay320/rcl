@@ -50,10 +50,25 @@ define a struct with a pointer to the next node as the last member:
  * @param base The head node (value, not pointer); iteration starts from base itself
  * @param i_name Name of the pointer variable used as iterator
  */
-#define ll_for_each(base, i_name) for (typeof(base)* i_name = &base; i_name != NULL; i_name = i_name->next)
+#define ll_for_each(base, i_name) \
+    for (typeof(base)* i_name = &base; i_name != NULL; i_name = i_name->next)
 
-#define ll_for_each_free(base, free_func) \
-    ll_for_each(base, __i) { free_func(__i) }
+/**
+ * @brief Free every node in the list, starting from base itself
+ *
+ * @note Saves the next pointer before freeing so it is safe with free()
+ * @param base The head node (value, not pointer); must be heap allocated
+ * @param free_func Function used to free each node
+ */
+#define ll_for_each_free(base, free_func)     \
+    ({                                        \
+        typeof(base)* __i = &(base);          \
+        while (__i != NULL) {                 \
+            typeof(base)* __next = __i->next; \
+            free_func(__i);                   \
+            __i = __next;                     \
+        }                                     \
+    })
 
 /**
  * @brief Count nodes in the list

@@ -215,7 +215,7 @@ RCL_INLINE bool f_array_push(void** array, void* element) {
     assert(*array);
     struct array* header = array_get_header(*array);
     if (__builtin_expect(header->len == header->cap, 0)) {
-        size_t new_cap = header->cap * 2;
+        size_t new_cap = header->cap == 0 ? 1 : header->cap * 2;
         if (!f_array_resize(array, new_cap)) {
             return false;
         }
@@ -233,7 +233,8 @@ RCL_INLINE void array_remove_index(void* array, size_t index) {
     struct array* header = array_get_header(array);
     assert(header->len > index);
 
-    memmove(header->data + (index * header->stride), header->data + ((index + 1) * header->stride), (header->len - 1 - index) * header->stride);
+    memmove(header->data + (index * header->stride), header->data + ((index + 1) * header->stride),
+            (header->len - 1 - index) * header->stride);
     header->len--;
 }
 

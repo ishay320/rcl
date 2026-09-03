@@ -111,6 +111,7 @@ bool cmd_wait(cmd_proc* proc, int* status, ssize_t timeout_ms);
 
 bool cmd_append(cmd_builder* cmd, char* arg);
 
+#define CMD_IMPLEMENTATION
 #ifdef CMD_IMPLEMENTATION
 #include "arrays/dynamic_array.h"
 
@@ -224,8 +225,16 @@ void cmd_destroy(cmd_proc* proc) {
 
     if (cmd_is_alive(*proc)) {
         cmd_signal(*proc, SIGKILL);
-        proc->_reaped      = true;
-        proc->_exit_status = 128 + SIGKILL;
+    }
+
+    int wstatus = 0;
+    if (waitpid(proc->pid, &wstatus, 0) != -1) {
+        if (WIFSIGNALED(wstatus)) {
+            proc->_exit_status = 128 + WTERMSIG(wstatus);
+        } else {
+            proc->_exit_status = WEXITSTATUS(wstatus);
+        }
+        proc->_reaped = true;
     }
 
     cmd__proc_fd_close(proc);
@@ -262,13 +271,17 @@ ssize_t cmd__read_stream(int fd, char* buffer, size_t size, int timeout_ms) {
     return read(fd, buffer, size);
 }
 
-ssize_t cmd_read(cmd_proc proc, char* buffer, size_t size, size_t timeout_ms) { return cmd__read_stream(proc.p_stdout[0], buffer, size, timeout_ms); }
+ssize_t cmd_read(cmd_proc proc, char* buffer, size_t size, size_t timeout_ms) {
+    return cmd__read_stream(proc.p_stdout[0], buffer, size, timeout_ms);
+}
 
 ssize_t cmd_read_err(cmd_proc proc, char* buffer, size_t size, size_t timeout_ms) {
     return cmd__read_stream(proc.p_stderr[0], buffer, size, timeout_ms);
 }
 
-ssize_t cmd_write(cmd_proc proc, const char* data, size_t size) { return write(proc.p_stdin[1], data, size); }
+ssize_t cmd_write(cmd_proc proc, const char* data, size_t size) {
+    return write(proc.p_stdin[1], data, size);
+}
 
 bool cmd_is_alive(const cmd_proc proc) {
     siginfo_t si = {0};
@@ -327,11 +340,9 @@ bool cmd_wait(cmd_proc* proc, int* status, ssize_t timeout_ms) {
             perror("waitid failed");
             return false;
         }
-        proc->_reaped      = true;
-        proc->_exit_status = si.si_status;
-        *status            = proc->_exit_status;
-        cmd__proc_fd_close(proc);
-        return true;
+        // the child has exited but WNOWAIT left it waitable: cmd_reap does the
+        // actual reaping, status decoding and fd cleanup
+        return cmd_reap(proc, status);
     }
 
     int fd = syscall(SYS_pidfd_open, proc->pid, 0);

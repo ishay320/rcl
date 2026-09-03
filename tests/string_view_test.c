@@ -5,11 +5,14 @@
 
 #include "test_suite.h"
 
+/* note: string_view data is not null-terminated, so raw view contents are
+ * checked with strncmp/sv_compare instead of ASSERT_CMP on the data pointer */
+
 TEST_CASE(test_sv_string_to_string_view, {
     char* s        = "hello";
     string_view sv = sv_string_to_string_view(s);
     ASSERT_CMP(sv.size, (size_t)5);
-    ASSERT_CMP((const void*)sv.data, (const void*)s, "same pointer, not just same text");
+    ASSERT_CMP((const void*)sv.data, (const void*)s, "view must alias the string, not copy it");
 
     string_view empty = sv_string_to_string_view("");
     ASSERT_CMP(empty.size, (size_t)0);
@@ -26,8 +29,15 @@ TEST_CASE(test_sv_substring, {
     ASSERT_CMP(tail.size, (size_t)5);
     ASSERT_CMP(strncmp(tail.data, "world", 5), 0);
 
-    string_view zero = sv_substring(sv, 3, 3);
-    ASSERT_CMP(zero.size, (size_t)0);
+    string_view full = sv_substring(sv, 0, sv.size);
+    ASSERT_CMP(sv_compare(full, sv), 0, "[0, size) must give back the whole view");
+})
+
+TEST_CASE(test_sv_substring_invalid_range_is_empty, {
+    string_view sv = sv_string_to_string_view("hello");
+    ASSERT_CMP(sv_substring(sv, 3, 3).size, (size_t)0, "start == end");
+    ASSERT_CMP(sv_substring(sv, 4, 2).size, (size_t)0, "start > end");
+    ASSERT_CMP(sv_substring(sv, 0, 6).size, (size_t)0, "end > size");
 })
 
 TEST_CASE(test_sv_trim_left, {
@@ -37,11 +47,9 @@ TEST_CASE(test_sv_trim_left, {
     ASSERT_CMP(trimmed.size, (size_t)3);
     ASSERT_CMP(strncmp(trimmed.data, "llo", 3), 0);
 
-    string_view none = sv_trim_left(sv, 0);
-    ASSERT_CMP(none.size, (size_t)5);
-
-    string_view all = sv_trim_left(sv, 5);
-    ASSERT_CMP(all.size, (size_t)0);
+    ASSERT_CMP(sv_trim_left(sv, 0).size, (size_t)5, "trim of 0 keeps the view");
+    ASSERT_CMP(sv_trim_left(sv, 5).size, (size_t)0, "trim of size empties the view");
+    ASSERT_CMP(sv_trim_left(sv, 6).size, (size_t)0, "trim past the end is empty, not UB");
 })
 
 TEST_CASE(test_sv_trim_right, {
@@ -51,65 +59,70 @@ TEST_CASE(test_sv_trim_right, {
     ASSERT_CMP(trimmed.size, (size_t)3);
     ASSERT_CMP(strncmp(trimmed.data, "hel", 3), 0);
 
-    string_view none = sv_trim_right(sv, 0);
-    ASSERT_CMP(none.size, (size_t)5);
-
-    string_view all = sv_trim_right(sv, 5);
-    ASSERT_CMP(all.size, (size_t)0);
+    ASSERT_CMP(sv_trim_right(sv, 0).size, (size_t)5, "trim of 0 keeps the view");
+    ASSERT_CMP(sv_trim_right(sv, 5).size, (size_t)0, "trim of size empties the view");
+    ASSERT_CMP(sv_trim_right(sv, 6).size, (size_t)0, "trim past the end is empty, not UB");
 })
 
 TEST_CASE(test_sv_starts_with, {
-    string_view sv      = sv_string_to_string_view("hello world");
-    string_view match   = sv_string_to_string_view("hello");
-    string_view nomatch = sv_string_to_string_view("world");
-    string_view empty   = sv_string_to_string_view("");
+    string_view sv = sv_string_to_string_view("hello world");
 
-    ASSERT_TRUE(sv_starts_with(sv, match));
-    ASSERT_FALSE(sv_starts_with(sv, nomatch));
-    ASSERT_TRUE(sv_starts_with(sv, empty));
-    ASSERT_TRUE(sv_starts_with(sv, sv));
+    ASSERT_TRUE(sv_starts_with(sv, sv_string_to_string_view("hello")));
+    ASSERT_FALSE(sv_starts_with(sv, sv_string_to_string_view("world")));
+    ASSERT_TRUE(sv_starts_with(sv, sv_string_to_string_view("")), "empty prefix always matches");
+    ASSERT_TRUE(sv_starts_with(sv, sv), "view starts with itself");
+    ASSERT_FALSE(sv_starts_with(sv_string_to_string_view("he"), sv),
+                 "prefix longer than the view can never match");
 })
 
 TEST_CASE(test_sv_ends_with, {
-    string_view sv      = sv_string_to_string_view("hello world");
-    string_view match   = sv_string_to_string_view("world");
-    string_view nomatch = sv_string_to_string_view("hello");
-    string_view empty   = sv_string_to_string_view("");
+    string_view sv = sv_string_to_string_view("hello world");
 
-    ASSERT_TRUE(sv_ends_with(sv, match));
-    ASSERT_FALSE(sv_ends_with(sv, nomatch));
-    ASSERT_TRUE(sv_ends_with(sv, empty));
-    ASSERT_TRUE(sv_ends_with(sv, sv));
+    ASSERT_TRUE(sv_ends_with(sv, sv_string_to_string_view("world")));
+    ASSERT_FALSE(sv_ends_with(sv, sv_string_to_string_view("hello")));
+    ASSERT_TRUE(sv_ends_with(sv, sv_string_to_string_view("")), "empty suffix always matches");
+    ASSERT_TRUE(sv_ends_with(sv, sv), "view ends with itself");
+    ASSERT_FALSE(sv_ends_with(sv_string_to_string_view("ld"), sv),
+                 "suffix longer than the view can never match");
 })
 
 TEST_CASE(test_sv_copy, {
     string_view sv = sv_string_to_string_view("hello");
-    char buf[16]   = {0};
 
+    char buf[8];
+    memset(buf, 'x', sizeof(buf));
     ASSERT_TRUE(sv_copy(sv, buf, sizeof(buf)));
-    ASSERT_CMP(strncmp(buf, "hello", 5), 0);
+    ASSERT_CMP(buf, "hello", "copy must be null-terminated");
 
-    char small[3] = {0};
-    ASSERT_FALSE(sv_copy(sv, small, sizeof(small)));
+    char fit[6];
+    ASSERT_TRUE(sv_copy(sv, fit, sizeof(fit)), "size + 1 is exactly enough");
+    ASSERT_CMP(fit, "hello");
+
+    char small[5];
+    ASSERT_FALSE(sv_copy(sv, small, sizeof(small)),
+                 "buffer == view size leaves no room for the terminator");
 })
 
 TEST_CASE(test_sv_compare, {
-    string_view a      = sv_string_to_string_view("abc");
-    string_view same   = sv_string_to_string_view("abc");
-    string_view after  = sv_string_to_string_view("abd");
-    string_view short_ = sv_string_to_string_view("ab");
+    string_view abc   = sv_string_to_string_view("abc");
+    string_view abd   = sv_string_to_string_view("abd");
+    string_view ab    = sv_string_to_string_view("ab");
+    string_view empty = sv_string_to_string_view("");
 
-    ASSERT_CMP(sv_compare(a, same), 0);
-    ASSERT_TRUE(sv_compare(a, after) < 0);
-    ASSERT_TRUE(sv_compare(after, a) > 0);
-    ASSERT_TRUE(sv_compare(short_, a) < 0);
-    ASSERT_TRUE(sv_compare(a, short_) > 0);
+    ASSERT_CMP(sv_compare(abc, sv_string_to_string_view("abc")), 0);
+    ASSERT_TRUE(sv_compare(abc, abd) < 0);
+    ASSERT_TRUE(sv_compare(abd, abc) > 0);
+    ASSERT_TRUE(sv_compare(ab, abc) < 0, "shared prefix: shorter view sorts first");
+    ASSERT_TRUE(sv_compare(abc, ab) > 0);
+    ASSERT_CMP(sv_compare(empty, empty), 0);
+    ASSERT_TRUE(sv_compare(empty, abc) < 0);
 })
 
 int main(void) {
     START_SUITE;
     RUN(test_sv_string_to_string_view);
     RUN(test_sv_substring);
+    RUN(test_sv_substring_invalid_range_is_empty);
     RUN(test_sv_trim_left);
     RUN(test_sv_trim_right);
     RUN(test_sv_starts_with);
@@ -117,5 +130,4 @@ int main(void) {
     RUN(test_sv_copy);
     RUN(test_sv_compare);
     END_SUITE;
-    return 0;
 }

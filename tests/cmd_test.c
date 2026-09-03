@@ -1,226 +1,261 @@
 #define CMD_IMPLEMENTATION
 #include "cmd.h"
 
-#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "ansi.h"
 #include "test_suite.h"
 
-TEST_CASE(test_append, {
+TEST_CASE(test_append_builds_null_terminated_argv, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "echo"), "failed to append");
-    ASSERT_TRUE(cmd_append(&cmd, "hello world"), "failed to append");
+    ASSERT_CMP(cmd.size, (size_t)2, "arg + NULL terminator");
+    ASSERT_TRUE(cmd_append(&cmd, "hello"), "failed to append");
+    ASSERT_CMP(cmd.size, (size_t)3, "terminator is reused, not duplicated");
+    ASSERT_CMP(cmd.data[0], "echo");
+    ASSERT_CMP(cmd.data[1], "hello");
+    ASSERT_CMP(cmd.data[2], (char*)NULL, "argv stays NULL terminated");
     cmd_builder_destroy(&cmd);
 })
 
-// test spawn real command
-TEST_CASE(test_spawn_real, {
+TEST_CASE(test_spawn_rejects_empty_and_missing_command, {
+    cmd_builder empty = {0};
+    cmd_proc proc     = {0};
+    ASSERT_FALSE(cmd_spawn(empty, &proc), "empty builder");
+    cmd_builder_destroy(&empty);
+
     cmd_builder cmd = {0};
-    ASSERT_TRUE(cmd_append(&cmd, "true"), "failed to append");
-    cmd_proc proc = {0};
-    ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
-    cmd_destroy(&proc);
+    ASSERT_TRUE(cmd_append(&cmd, "command-that-does-not-exist"), "failed to append");
+    ASSERT_FALSE(cmd_spawn(cmd, &proc), "missing binary");
+    ASSERT_CMP(errno, ENOENT);
+    cmd_destroy(&proc);  // destroy after a failed spawn must be safe
     cmd_builder_destroy(&cmd);
 })
 
-// test for running non existing command
-TEST_CASE(test_spawn_fail, {
-    cmd_builder cmd = {0};
-    ASSERT_TRUE(cmd_append(&cmd, "command that is not existing"), "failed to append");
-    cmd_proc proc = {0};
-    ASSERT_FALSE(cmd_spawn(cmd, &proc), "spawn");
-    ASSERT_CMP(errno, ENOENT, "errno should be ENOENT");
-    cmd_destroy(&proc);
-    cmd_builder_destroy(&cmd);
-})
-
-// test for running empty command
-TEST_CASE(test_spawn_empty, {
-    cmd_builder cmd = {0};
-    cmd_proc proc   = {0};
-    ASSERT_FALSE(cmd_spawn(cmd, &proc), "spawn of empty cmd_builder");
-    cmd_builder_destroy(&cmd);
-})
-
-// test for destroy empty proc
-TEST_CASE(test_destroy_empty_proc, {
+// cmd_destroy on a zeroed proc used to close fds 0/0/0
+TEST_CASE(test_destroy_of_empty_proc_is_a_noop, {
     cmd_proc proc = {0};
     cmd_destroy(&proc);
-    ASSERT_CMP(proc.p_stdout[0], 0, "destroy closes pipes");
-    ASSERT_CMP(proc.p_stderr[0], 0, "destroy closes pipes");
-    ASSERT_CMP(proc.p_stdin[1], 0, "destroy closes pipes");
+    ASSERT_CMP(proc.p_stdout[0], 0, "fd untouched");
+    ASSERT_CMP(proc.p_stderr[0], 0, "fd untouched");
+    ASSERT_CMP(proc.p_stdin[1], 0, "fd untouched");
 })
 
-// test read output stdout
-TEST_CASE(test_read_output, {
+TEST_CASE(test_echo_splits_appended_arguments, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "echo"), "failed to append");
-    ASSERT_TRUE(cmd_append(&cmd, "hello world"), "failed to append");
+    ASSERT_TRUE(cmd_append(&cmd, "hello"), "failed to append");
+    ASSERT_TRUE(cmd_append(&cmd, "world"), "failed to append");
     cmd_proc proc = {0};
     ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
+    cmd_builder_destroy(&cmd);
 
     char buffer[128] = {0};
-    cmd_read(proc, buffer, sizeof(buffer) - 1, 1000);
+    ssize_t n        = cmd_read(proc, buffer, sizeof(buffer) - 1, 1000);
+    ASSERT_CMP(n, (ssize_t)strlen("hello world\n"));
+    ASSERT_CMP(buffer, "hello world\n", "each append is its own argv entry");
 
-    ASSERT_CMP(buffer, "hello world\n", "str matches");
     cmd_destroy(&proc);
-    cmd_builder_destroy(&cmd);
 })
 
-// test read output stderr
-TEST_CASE(test_read_err, {
+TEST_CASE(test_stdout_and_stderr_are_separate_streams, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "sh"), "failed to append");
     ASSERT_TRUE(cmd_append(&cmd, "-c"), "failed to append");
-    ASSERT_TRUE(cmd_append(&cmd, "echo hello world 1>&2"), "failed to append");
+    ASSERT_TRUE(cmd_append(&cmd, "echo out; echo err 1>&2"), "failed to append");
     cmd_proc proc = {0};
     ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
+    cmd_builder_destroy(&cmd);
 
     char buffer[128] = {0};
-    cmd_read_err(proc, buffer, sizeof(buffer) - 1, 1000);
+    ASSERT_TRUE(cmd_read(proc, buffer, sizeof(buffer) - 1, 1000) > 0);
+    ASSERT_CMP(buffer, "out\n");
 
-    ASSERT_CMP(buffer, "hello world\n", "str matches");
+    memset(buffer, 0, sizeof(buffer));
+    ASSERT_TRUE(cmd_read_err(proc, buffer, sizeof(buffer) - 1, 1000) > 0);
+    ASSERT_CMP(buffer, "err\n");
+
     cmd_destroy(&proc);
-    cmd_builder_destroy(&cmd);
 })
 
-// test write input stdin
-TEST_CASE(test_write_input, {
+TEST_CASE(test_stdin_roundtrip_and_eof_after_close, {
     cmd_builder cmd = {0};
     ASSERT_TRUE(cmd_append(&cmd, "cat"), "failed to append");
     cmd_proc proc = {0};
     ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
+    cmd_builder_destroy(&cmd);
 
     const char* msg = "hello from parent\n";
-    ssize_t n       = cmd_write(proc, (char*)msg, strlen(msg));
-    ASSERT_CMP(n, (ssize_t)strlen(msg), "write should write all bytes");
+    ASSERT_CMP(cmd_write(proc, msg, strlen(msg)), (ssize_t)strlen(msg), "write to proc failed");
 
     char buffer[128] = {0};
-    n                = cmd_read(proc, buffer, sizeof(buffer) - 1, 1000);
-    ASSERT_CMP(n, (ssize_t)strlen(msg), "read should read all bytes");
-    buffer[n] = '\0';
-    ASSERT_CMP(buffer, msg, "str matches");
+    ssize_t n        = cmd_read(proc, buffer, sizeof(buffer) - 1, 1000);
+    ASSERT_CMP(n, (ssize_t)strlen(msg), "short read");
+    ASSERT_CMP(buffer, msg);
+
+    close(proc.p_stdin[1]);  // EOF on stdin makes cat exit
+    proc.p_stdin[1] = -1;
+    ASSERT_CMP(cmd_read(proc, buffer, sizeof(buffer), 1000), (ssize_t)0, "EOF");
+
+    int status = -1;
+    // TODO: check if 0 is blocking or nonblocking
+    ASSERT_TRUE(cmd_wait(&proc, &status, 0), "blocking wait");
+    ASSERT_CMP(status, 0);
+    cmd_destroy(&proc);
+})
+
+TEST_CASE(test_wait_reports_exit_code, {
+    cmd_builder cmd = {0};
+    ASSERT_TRUE(cmd_append(&cmd, "sh"), "failed to append");
+    ASSERT_TRUE(cmd_append(&cmd, "-c"), "failed to append");
+    ASSERT_TRUE(cmd_append(&cmd, "exit 42"), "failed to append");
+    cmd_proc proc = {0};
+    ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
+    cmd_builder_destroy(&cmd);
+
+    int status = -1;
+    ASSERT_TRUE(cmd_wait(&proc, &status, 0), "blocking wait");
+    ASSERT_CMP(status, 42);
+
+    status = -1;
+    ASSERT_TRUE(cmd_wait(&proc, &status, -1), "waiting again returns the stored status");
+    ASSERT_CMP(status, 42);
+
+    status = -1;
+    ASSERT_TRUE(cmd_wait(&proc, &status, 50),
+                "timed wait on a reaped proc returns the stored status");
+    ASSERT_CMP(status, 42);
+    cmd_destroy(&proc);
+})
+
+TEST_CASE(test_read_and_wait_time_out_on_idle_proc, {
+    cmd_builder cmd = {0};
+    ASSERT_TRUE(cmd_append(&cmd, "cat"), "failed to append");
+    cmd_proc proc = {0};
+    ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");  // cat blocks on stdin forever
+    cmd_builder_destroy(&cmd);
+
+    char buffer[8];
+    errno = 0;
+    ASSERT_CMP(cmd_read(proc, buffer, sizeof(buffer), 50), (ssize_t)-1);
+    ASSERT_CMP(errno, ETIMEDOUT);
+
+    int status = -1;
+    ASSERT_FALSE(cmd_wait(&proc, &status, -1), "non blocking wait on a running proc");
+    errno = 0;
+    ASSERT_FALSE(cmd_wait(&proc, &status, 50), "timed wait on a proc that never exits");
+    ASSERT_CMP(errno, ETIMEDOUT);
+    ASSERT_TRUE(cmd_is_alive(proc));
 
     cmd_destroy(&proc);
-    cmd_builder_destroy(&cmd);
 })
 
-// test status returned wait for end of proc
-TEST_CASE(test_wait_long_commands, {
+// regression: cmd_destroy used to SIGKILL without reaping, leaving a zombie
+TEST_CASE(test_destroy_kills_running_proc_and_reaps_it, {
     cmd_builder cmd = {0};
-    ASSERT_TRUE(cmd_append(&cmd, "sleep"), "failed to append");
-    ASSERT_TRUE(cmd_append(&cmd, "0.5"), "failed to append");
+    ASSERT_TRUE(cmd_append(&cmd, "cat"), "failed to append");
     cmd_proc proc = {0};
     ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
-    // wait for it to finish
-    int status;
-    ASSERT_TRUE(cmd_wait(&proc, &status, 0), "exit code");
-    ASSERT_CMP(status, 0, "exit code should be 0");
     cmd_builder_destroy(&cmd);
-})
 
-// test wait is shorter then the command
-TEST_CASE(test_wait_partial_long_commands, {
-    cmd_builder cmd = {0};
-    ASSERT_TRUE(cmd_append(&cmd, "sleep"), "failed to append");
-    ASSERT_TRUE(cmd_append(&cmd, "0.5"), "failed to append");
-    cmd_proc proc = {0};
-    ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
-    int status = 69;
-    ASSERT_CMP(status, 69, "exit code should be unchanged");
-    ASSERT_FALSE(cmd_wait(&proc, &status, 50), "exit code");
-    cmd_builder_destroy(&cmd);
-})
+    pid_t pid = proc.pid;
+    cmd_destroy(&proc);
+    ASSERT_FALSE(cmd_is_alive(proc));
 
-// test that the return value is correct
-TEST_CASE(test_return_status, {
-    cmd_builder cmd_t = {0};
-    ASSERT_TRUE(cmd_append(&cmd_t, "true"), "failed to append");
-    cmd_proc proc_t = {0};
-    ASSERT_TRUE(cmd_spawn(cmd_t, &proc_t), "spawn true");
-    cmd_builder_destroy(&cmd_t);
+    int wstatus;
+    errno = 0;
+    ASSERT_CMP(waitpid(pid, &wstatus, WNOHANG), -1, "no zombie left behind");
+    ASSERT_CMP(errno, ECHILD);
+
     int status = -1;
-    ASSERT_TRUE(cmd_wait(&proc_t, &status, 5), "exit code");
-    ASSERT_CMP(status, 0, "output status of true will be 0");
-    cmd_destroy(&proc_t);
+    ASSERT_TRUE(cmd_wait(&proc, &status, -1), "wait after destroy");
+    ASSERT_CMP(status, 128 + SIGKILL);
 
-    cmd_builder cmd_f = {0};
-    ASSERT_TRUE(cmd_append(&cmd_f, "false"), "failed to append");
-    cmd_proc proc_f = {0};
-    ASSERT_TRUE(cmd_spawn(cmd_f, &proc_f), "spawn true");
-    cmd_builder_destroy(&cmd_f);
-    status = -1;
-    ASSERT_TRUE(cmd_wait(&proc_f, &status, 5), "exit code");
-    ASSERT_CMP(status, 1, "output status of true will be 0");
-    cmd_destroy(&proc_f);
-    cmd_destroy(&proc_f);
+    cmd_destroy(&proc);  // double destroy is a no-op
+    ASSERT_CMP(proc.p_stdout[0], -1);
 })
 
-// test running couple of command together at the same time
-TEST_CASE(test_spawn_procs_together, {
-    const int count = 10;
-    cmd_proc procs[count];
-    memset(procs, 0, count * sizeof(*procs));
-    for (int i = 0; i < count; ++i) {
-        cmd_builder cmd = {0};
-        ASSERT_TRUE(cmd_append(&cmd, "sleep"), "failed to append");
-        ASSERT_TRUE(cmd_append(&cmd, "0.2"), "failed to append");
-        ASSERT_TRUE(cmd_spawn(cmd, &procs[i]), "spawn true");
-        cmd_builder_destroy(&cmd);
-    }
-    for (int i = 0; i < count; ++i) {
-        cmd_destroy(&procs[i]);
-    }
+// cmd_destroy used to skip reaping a proc that had already exited
+TEST_CASE(test_destroy_reaps_exited_unwaited_proc, {
+    cmd_builder cmd = {0};
+    ASSERT_TRUE(cmd_append(&cmd, "sh"), "failed to append");
+    ASSERT_TRUE(cmd_append(&cmd, "-c"), "failed to append");
+    ASSERT_TRUE(cmd_append(&cmd, "exit 7"), "failed to append");
+    cmd_proc proc = {0};
+    ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
+    cmd_builder_destroy(&cmd);
+
+    char buffer[8];
+    ASSERT_CMP(cmd_read(proc, buffer, sizeof(buffer), 0), (ssize_t)0, "EOF means it exited");
+
+    pid_t pid = proc.pid;
+    cmd_destroy(&proc);
+
+    int wstatus;
+    errno = 0;
+    ASSERT_CMP(waitpid(pid, &wstatus, WNOHANG), -1, "no zombie left behind");
+    ASSERT_CMP(errno, ECHILD);
+
+    int status = -1;
+    ASSERT_TRUE(cmd_wait(&proc, &status, -1), "destroy recorded the real exit code");
+    ASSERT_CMP(status, 7);
 })
 
-// test the io of running together cmds
-TEST_CASE(test_spawn_procs_together_io, {
-    const int count = 10;
-    cmd_proc procs[count];
-    memset(procs, 0, count * sizeof(*procs));
-    for (int i = 0; i < count; ++i) {
+TEST_CASE(test_signal_terminates_child, {
+    cmd_builder cmd = {0};
+    ASSERT_TRUE(cmd_append(&cmd, "cat"), "failed to append");
+    cmd_proc proc = {0};
+    ASSERT_TRUE(cmd_spawn(cmd, &proc), "spawn");
+    cmd_builder_destroy(&cmd);
+
+    ASSERT_CMP(cmd_signal(proc, SIGTERM), 0);
+    int status = -1;
+    ASSERT_TRUE(cmd_wait(&proc, &status, 0), "blocking wait");
+    ASSERT_CMP(status, 128 + SIGTERM, "signal deaths are reported as 128+sig");
+    cmd_destroy(&proc);
+})
+
+TEST_CASE(test_concurrent_procs_have_independent_io, {
+    enum { COUNT = 10 };
+    cmd_proc procs[COUNT];
+    memset(procs, 0, sizeof(procs));
+    for (int i = 0; i < COUNT; ++i) {
         cmd_builder cmd = {0};
         ASSERT_TRUE(cmd_append(&cmd, "cat"), "failed to append");
-        ASSERT_TRUE(cmd_spawn(cmd, &procs[i]), "spawn true");
+        ASSERT_TRUE(cmd_spawn(cmd, &procs[i]), "spawn");
         cmd_builder_destroy(&cmd);
     }
-    for (int i = 0; i < count; ++i) {
-        char arg[6];
+    for (int i = 0; i < COUNT; ++i) {
+        char arg[8];
         int len = sprintf(arg, "%d", i);
-        cmd_write(procs[i], arg, len);
+        ASSERT_CMP(cmd_write(procs[i], arg, len), (ssize_t)len);
     }
-    for (int i = 0; i < count; ++i) {
+    for (int i = 0; i < COUNT; ++i) {
         char buffer[32];
-        cmd_read(procs[i], buffer, 32, 20);
-        char test_buffer[8];
-        sprintf(test_buffer, "%d", i);
-        ASSERT_CMP(buffer, test_buffer, "str io not match");
+        ssize_t n = cmd_read(procs[i], buffer, sizeof(buffer) - 1, 1000);
+        ASSERT_TRUE(n > 0);
+        buffer[n] = '\0';
+        char expected[8];
+        sprintf(expected, "%d", i);
+        ASSERT_CMP(buffer, expected, "each proc echoes only its own input");
         cmd_destroy(&procs[i]);
     }
 })
-
-// TODO: Implement this:
-// test_argument_spliting
-// test_in_out_err_together
 
 int main(void) {
     START_SUITE;
-    RUN(test_append);
-    RUN(test_spawn_real);
-    RUN(test_spawn_fail);
-    RUN(test_spawn_empty);
-    RUN(test_destroy_empty_proc);
-    RUN(test_read_output);
-    RUN(test_read_err);
-    RUN(test_write_input);
-    RUN(test_wait_long_commands);
-    RUN(test_wait_partial_long_commands);
-    RUN(test_return_status);
-    RUN(test_spawn_procs_together);
-    RUN(test_spawn_procs_together_io);
+    RUN(test_append_builds_null_terminated_argv);
+    RUN(test_spawn_rejects_empty_and_missing_command);
+    RUN(test_destroy_of_empty_proc_is_a_noop);
+    RUN(test_echo_splits_appended_arguments);
+    RUN(test_stdout_and_stderr_are_separate_streams);
+    RUN(test_stdin_roundtrip_and_eof_after_close);
+    RUN(test_wait_reports_exit_code);
+    RUN(test_read_and_wait_time_out_on_idle_proc);
+    RUN(test_destroy_kills_running_proc_and_reaps_it);
+    RUN(test_destroy_reaps_exited_unwaited_proc);
+    RUN(test_signal_terminates_child);
+    RUN(test_concurrent_procs_have_independent_io);
     END_SUITE;
-    return 0;
 }
