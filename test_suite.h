@@ -176,7 +176,7 @@ void ts_print_failure(const struct test_result tr) {
     fflush(stdout);
 }
 
-#define RUN(fn)                                        \
+#define RUN(fn, name)                                  \
     do {                                               \
         s_cpu_start = clock();                         \
         clock_gettime(CLOCK_MONOTONIC, &s_wall_start); \
@@ -184,7 +184,7 @@ void ts_print_failure(const struct test_result tr) {
         if (tr.failed) {                               \
             ts_print_failure(tr);                      \
         } else {                                       \
-            ts_print_success(#fn);                     \
+            ts_print_success(name);                    \
         }                                              \
     } while (0)
 
@@ -211,9 +211,51 @@ void ts_print_failure(const struct test_result tr) {
 /* return value for main: 0 when every test passed, 1 otherwise */
 #define SUITE_EXIT_CODE (s_tests_failed == 0 ? 0 : 1)
 
-#define TEST_CASE(test_name, ...) \
-    struct test_result test_name(void) { __VA_ARGS__ return (struct test_result){0}; }
+// auto list the tests and main
+struct tc_node {
+    const char* t_name;
+    struct test_result (*t_func)(void);
+    struct tc_node* next;
+};
+
+static struct tc_node* tc_head = NULL;
+static struct tc_node* tc_tail = NULL;
+
+void tc_ll_append(struct tc_node* node) {
+    if (tc_head == NULL) {
+        tc_head = node;
+        tc_tail = node;
+        return;
+    }
+    tc_tail->next = node;
+    tc_tail       = node;
+}
+
+#undef TEST_CASE
+#define TEST_CASE(test_name, ...)                                                      \
+    struct test_result test_name(void) { __VA_ARGS__ return (struct test_result){0}; } \
+    __attribute__((constructor)) static void tc_##test_name(void) {                    \
+        struct tc_node* n = malloc(sizeof(*n));                                        \
+        n->t_func         = test_name;                                                 \
+        n->t_name         = #test_name;                                                \
+        n->next           = NULL;                                                      \
+        tc_ll_append(n);                                                               \
+    }
+
+int main(void) {
+    START_SUITE;
+    for (struct tc_node* p = tc_head; p != NULL; p = p->next) {
+        RUN(p->t_func, p->t_name);
+    }
+
+    struct tc_node* next = tc_head;
+    while (next != NULL) {
+        struct tc_node* prev = next;
+        next                 = next->next;
+        free(prev);
+    }
+
+    END_SUITE;
+}
 
 #endif  // TEST_SUITE_H
-// TODO: can use start suite and end suite for borders and #include __FILE__ for reuse the file and
-// change it using ifndef for test be something else: list comprehension

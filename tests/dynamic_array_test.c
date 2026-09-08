@@ -127,13 +127,3 @@ TEST_CASE(test_da_generic_element_types, {
     ASSERT_CMP(items.data[1].weight, 2.5f);
     da_destroy(&items);
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_da_append_stores_values_in_order);
-    RUN(test_da_capacity_doubles_when_full);
-    RUN(test_da_reserve_grows_but_never_shrinks);
-    RUN(test_da_destroy_zeroes_struct_and_allows_reuse);
-    RUN(test_da_generic_element_types);
-    END_SUITE;
-}

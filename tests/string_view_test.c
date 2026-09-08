@@ -117,17 +117,3 @@ TEST_CASE(test_sv_compare, {
     ASSERT_CMP(sv_compare(empty, empty), 0);
     ASSERT_TRUE(sv_compare(empty, abc) < 0);
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_sv_string_to_string_view);
-    RUN(test_sv_substring);
-    RUN(test_sv_substring_invalid_range_is_empty);
-    RUN(test_sv_trim_left);
-    RUN(test_sv_trim_right);
-    RUN(test_sv_starts_with);
-    RUN(test_sv_ends_with);
-    RUN(test_sv_copy);
-    RUN(test_sv_compare);
-    END_SUITE;
-}

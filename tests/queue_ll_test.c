@@ -172,17 +172,3 @@ TEST_CASE(test_qe_for_each, {
     ASSERT_CMP(count, 0, "for_each on empty queue must not iterate");
     qe_destroy_header(q);
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_qe_init);
-    RUN(test_qe_fifo_order);
-    RUN(test_qe_pop_empty_and_last);
-    RUN(test_qe_interleaved);
-    RUN(test_qe_front_back_node);
-    RUN(test_qe_front_back_peek);
-    RUN(test_qe_size);
-    RUN(test_qe_clear);
-    RUN(test_qe_for_each);
-    END_SUITE;
-}

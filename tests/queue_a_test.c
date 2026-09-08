@@ -178,17 +178,3 @@ TEST_CASE(test_qa_big_struct, {
     ASSERT_TRUE(qa_is_empty(q));
     qa_destroy(q);
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_qa_fifo_order);
-    RUN(test_qa_empty_ops_fail);
-    RUN(test_qa_full_rejects_push);
-    RUN(test_qa_front_back_peek);
-    RUN(test_qa_wrap_around);
-    RUN(test_qa_capacity_one);
-    RUN(test_qa_clear_after_wrap);
-    RUN(test_qa_destroy);
-    RUN(test_qa_big_struct);
-    END_SUITE;
-}

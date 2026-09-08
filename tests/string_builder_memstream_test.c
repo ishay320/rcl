@@ -86,16 +86,3 @@ TEST_CASE(test_sb_buffer_grows_across_many_appends, {
 })
 
 TEST_CASE(test_sb_destroy_null, { sb_destroy(NULL); })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_sb_empty_builder_yields_empty_string);
-    RUN(test_sb_append_concatenates_in_order);
-    RUN(test_sb_fappend_formats);
-    RUN(test_sb_append_empty_string_adds_nothing);
-    RUN(test_sb_fappend_has_no_length_limit);
-    RUN(test_sb_get_string_reflects_later_appends);
-    RUN(test_sb_buffer_grows_across_many_appends);
-    RUN(test_sb_destroy_null);
-    END_SUITE;
-}

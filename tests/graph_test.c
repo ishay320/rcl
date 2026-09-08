@@ -109,13 +109,3 @@ TEST_CASE(test_node_edges_get_returns_only_outgoing_edges, {
 
     graph_free(g);
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_node_push_and_get);
-    RUN(test_edge_create_between_existing_nodes);
-    RUN(test_edge_create_rejects_self_and_unknown_nodes);
-    RUN(test_node_find_by_predicate);
-    RUN(test_node_edges_get_returns_only_outgoing_edges);
-    END_SUITE;
-}

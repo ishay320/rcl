@@ -105,15 +105,3 @@ TEST_CASE(test_ll_for_each_free, {
     /* ASAN verifies every node is freed exactly once, with no use after free */
     ll_for_each_free(*head, free);
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_ll_insert_next);
-    RUN(test_ll_remove_next);
-    RUN(test_ll_count);
-    RUN(test_ll_find);
-    RUN(test_ll_insert_tail);
-    RUN(test_ll_for_each);
-    RUN(test_ll_for_each_free);
-    END_SUITE;
-}

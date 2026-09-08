@@ -1,10 +1,6 @@
 #define CMD_IMPLEMENTATION
 #include "cmd.h"
 
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "test_suite.h"
 
 TEST_CASE(test_append_builds_null_terminated_argv, {
@@ -242,20 +238,3 @@ TEST_CASE(test_concurrent_procs_have_independent_io, {
         cmd_destroy(&procs[i]);
     }
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_append_builds_null_terminated_argv);
-    RUN(test_spawn_rejects_empty_and_missing_command);
-    RUN(test_destroy_of_empty_proc_is_a_noop);
-    RUN(test_echo_splits_appended_arguments);
-    RUN(test_stdout_and_stderr_are_separate_streams);
-    RUN(test_stdin_roundtrip_and_eof_after_close);
-    RUN(test_wait_reports_exit_code);
-    RUN(test_read_and_wait_time_out_on_idle_proc);
-    RUN(test_destroy_kills_running_proc_and_reaps_it);
-    RUN(test_destroy_reaps_exited_unwaited_proc);
-    RUN(test_signal_terminates_child);
-    RUN(test_concurrent_procs_have_independent_io);
-    END_SUITE;
-}

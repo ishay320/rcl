@@ -101,16 +101,3 @@ TEST_CASE(test_sb_many_appended_segments, {
 })
 
 TEST_CASE(test_sb_destroy_null, { sb_destroy(NULL); })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_sb_empty_builder_yields_empty_string);
-    RUN(test_sb_append_concatenates_in_order);
-    RUN(test_sb_fappend_formats);
-    RUN(test_sb_append_empty_string_adds_nothing);
-    RUN(test_sb_fappend_truncates_to_buffer_size);
-    RUN(test_sb_usable_after_get_string);
-    RUN(test_sb_many_appended_segments);
-    RUN(test_sb_destroy_null);
-    END_SUITE;
-}

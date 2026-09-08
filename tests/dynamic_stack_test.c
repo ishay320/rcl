@@ -83,12 +83,3 @@ TEST_CASE(test_ds_struct_elements, {
     ASSERT_CMP(ds_top(s).id, 1, "pop must expose the element below");
     ds_destroy(&s);
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_ds_lifo_push_pop_order);
-    RUN(test_ds_grows_past_initial_capacity);
-    RUN(test_ds_interleaved_push_pop_and_reuse);
-    RUN(test_ds_struct_elements);
-    END_SUITE;
-}

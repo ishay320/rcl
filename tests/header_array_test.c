@@ -140,16 +140,3 @@ TEST_CASE(test_array_struct_elements, {
 
     array_free(arr);
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_array_init_sets_metadata);
-    RUN(test_array_push_lvalue_and_rvalue);
-    RUN(test_array_capacity_doubles_when_full);
-    RUN(test_array_reserve_only_grows);
-    RUN(test_array_resize_shrink_clamps_len);
-    RUN(test_array_push_grows_from_zero_capacity);
-    RUN(test_array_remove_index_preserves_order);
-    RUN(test_array_struct_elements);
-    END_SUITE;
-}

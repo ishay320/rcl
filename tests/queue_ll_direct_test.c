@@ -132,15 +132,3 @@ TEST_CASE(test_qd_struct_data, {
     }
     ASSERT_TRUE(qd_is_empty(&q));
 })
-
-int main(void) {
-    START_SUITE;
-    RUN(test_qd_fifo_order);
-    RUN(test_qd_pop_empty_and_last);
-    RUN(test_qd_interleaved);
-    RUN(test_qd_front_back_peek);
-    RUN(test_qd_size);
-    RUN(test_qd_clear);
-    RUN(test_qd_struct_data);
-    END_SUITE;
-}
