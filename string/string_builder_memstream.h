@@ -80,6 +80,18 @@ const char* sb_get_string(const sb_memstream* s);
  */
 void sb_destroy(sb_memstream* s);
 
+// utils
+
+/**
+ * @brief Read the entire contents of a file into the string builder.
+ *
+ * @param sb        Pointer to the string builder.
+ * @param file_name Name of the file to read.
+ *
+ * @return true on success, false on failure.
+ */
+bool sb_read_file(sb_memstream** sb, const char* file_name);
+
 #ifdef STRING_BUILDER_MEMSTREAM_IMPLEMENTATION
 
 sb_memstream* sb_create(void) {
@@ -117,6 +129,22 @@ void sb_destroy(sb_memstream* s) {
     fclose(s->sb);
     free(s->buffer);
     free(s);
+}
+
+// utils
+
+bool sb_read_file(sb_memstream** sb, const char* file_name) {
+    FILE* file = fopen(file_name, "r");
+    if (!file) {
+        return false;
+    }
+    char buffer[4096];
+    size_t n;
+    while ((n = fread(buffer, sizeof(char), sizeof(buffer), file)) > 0) {
+        fwrite(buffer, sizeof(char), n, (*sb)->sb);
+    }
+    fclose(file);
+    return true;
 }
 
 #endif  // STRING_BUILDER_MEMSTREAM_IMPLEMENTATION

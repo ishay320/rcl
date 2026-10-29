@@ -191,8 +191,9 @@ void ts_print_failure(const struct test_result tr) {
 #define START_SUITE                              \
     clock_t suite_start = clock();               \
     struct timespec wall_start;                  \
+    const char* suite_file = ts_suite_file();    \
     clock_gettime(CLOCK_MONOTONIC, &wall_start); \
-    printf(AN_BOLD AN_CYAN "Running " __FILE__ " tests..." AN_RESET "\n")
+    printf(AN_BOLD AN_CYAN "Running %s tests..." AN_RESET "\n", suite_file)
 
 #define END_SUITE                                                                                \
     do {                                                                                         \
@@ -201,9 +202,10 @@ void ts_print_failure(const struct test_result tr) {
         clock_gettime(CLOCK_MONOTONIC, &wall_end);                                               \
         double _total_ms_wall = (double)(wall_end.tv_sec - wall_start.tv_sec) * 1000.0 +         \
                                 (double)(wall_end.tv_nsec - wall_start.tv_nsec) / 1e6;           \
-        printf(AN_GREEN "\n%ld/%ld " __FILE__ " tests passed!" AN_RESET AN_DIM                   \
+        printf(AN_GREEN "\n%ld/%ld %s tests passed!" AN_RESET AN_DIM                             \
                         " (cpu: %.3f ms, wall: %.3f ms)\n" AN_RESET,                             \
-               s_tests_run - s_tests_failed, s_tests_run, _total_ms_cpu, _total_ms_wall);        \
+               s_tests_run - s_tests_failed, s_tests_run, suite_file, _total_ms_cpu,             \
+               _total_ms_wall);                                                                  \
         if (s_tests_failed > 0) printf(AN_RED "%ld tests failed" AN_RESET "\n", s_tests_failed); \
         return SUITE_EXIT_CODE;                                                                  \
     } while (0)
@@ -214,12 +216,16 @@ void ts_print_failure(const struct test_result tr) {
 // auto list the tests and main
 struct tc_node {
     const char* t_name;
+    const char* t_file;
     struct test_result (*t_func)(void);
     struct tc_node* next;
 };
 
 static struct tc_node* tc_head = NULL;
 static struct tc_node* tc_tail = NULL;
+
+// suite name = file of first registered test
+static const char* ts_suite_file(void) { return tc_head ? tc_head->t_file : "unknown"; }
 
 void tc_ll_append(struct tc_node* node) {
     if (tc_head == NULL) {
@@ -238,6 +244,7 @@ void tc_ll_append(struct tc_node* node) {
         struct tc_node* n = malloc(sizeof(*n));                                        \
         n->t_func         = test_name;                                                 \
         n->t_name         = #test_name;                                                \
+        n->t_file         = __FILE__;                                                  \
         n->next           = NULL;                                                      \
         tc_ll_append(n);                                                               \
     }

@@ -86,3 +86,68 @@ TEST_CASE(test_sb_buffer_grows_across_many_appends, {
 })
 
 TEST_CASE(test_sb_destroy_null, { sb_destroy(NULL); })
+
+TEST_CASE(test_sb_read_file_missing_file_returns_false, {
+    sb_memstream* sb = sb_create();
+    ASSERT_TRUE(sb != NULL);
+    ASSERT_FALSE(sb_read_file(&sb, "this_file_does_not_exist.txt"));
+    ASSERT_CMP(sb_get_string(sb), "", "failed read must not add anything");
+    sb_destroy(sb);
+})
+
+TEST_CASE(test_sb_read_file_appends_contents, {
+    const char* path = "sb_read_file_small.tmp";
+    FILE* f          = fopen(path, "w");
+    ASSERT_TRUE(f != NULL);
+    ASSERT_TRUE(fputs("line one\nline two\n", f) >= 0);
+    fclose(f);
+
+    sb_memstream* sb = sb_create();
+    ASSERT_TRUE(sb != NULL);
+    ASSERT_TRUE(sb_append(sb, "start: "));
+    ASSERT_TRUE(sb_read_file(&sb, path));
+    ASSERT_CMP(sb_get_string(sb), "start: line one\nline two\n",
+               "file is appended after existing content");
+
+    sb_destroy(sb);
+    remove(path);
+})
+
+TEST_CASE(test_sb_read_file_empty_file_adds_nothing, {
+    const char* path = "sb_read_file_empty.tmp";
+    FILE* f          = fopen(path, "w");
+    ASSERT_TRUE(f != NULL);
+    fclose(f);
+
+    sb_memstream* sb = sb_create();
+    ASSERT_TRUE(sb != NULL);
+    ASSERT_TRUE(sb_read_file(&sb, path));
+    ASSERT_CMP(sb_get_string(sb), "");
+
+    sb_destroy(sb);
+    remove(path);
+})
+
+TEST_CASE(test_sb_read_file_larger_than_chunk, {
+    /* the reader copies in 4096-byte chunks; go past one chunk boundary */
+    const char* path = "sb_read_file_large.tmp";
+    FILE* f          = fopen(path, "w");
+    ASSERT_TRUE(f != NULL);
+    char chunk[1000];
+    memset(chunk, 'z', sizeof(chunk));
+    for (int i = 0; i < 10; i++) {
+        ASSERT_TRUE(fwrite(chunk, 1, sizeof(chunk), f) == sizeof(chunk));
+    }
+    fclose(f);
+
+    sb_memstream* sb = sb_create();
+    ASSERT_TRUE(sb != NULL);
+    ASSERT_TRUE(sb_read_file(&sb, path));
+    const char* s = sb_get_string(sb);
+    ASSERT_TRUE(s != NULL);
+    ASSERT_CMP(strlen(s), (size_t)10000, "all bytes must survive across chunk boundaries");
+    ASSERT_TRUE(strspn(s, "z") == 10000, "no bytes may be altered or dropped");
+
+    sb_destroy(sb);
+    remove(path);
+})

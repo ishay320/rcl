@@ -21,7 +21,7 @@
  *   char buf[] = "hello world";
  *   string_view sv = sv_string_to_string_view(buf);
  *   string_view word = sv_substring(sv, 0, 5);
- *   printf(SV_FMT "\n", SV_PRINT(word));  // "hello"
+ *   printf(SV_PRINT_FMT "\n", SV_PRINT(word));  // "hello"
  */
 
 /**
@@ -29,8 +29,24 @@
  */
 typedef struct {
     size_t size;
-    char* data;
+    const char* data;
 } string_view;
+
+/**
+ * @brief Chops off spaces from the left(space, tabs and newlines)
+ *
+ * @param sv Source view
+ * @return Trimmed view, or empty view if amount > sv.size
+ */
+string_view sv_chop_left(const string_view sv);
+
+/**
+ * @brief Chops off spaces from the right(space, tabs and newlines)
+ *
+ * @param sv Source view
+ * @return Trimmed view, or empty view if amount > sv.size
+ */
+string_view sv_chop_right(const string_view sv);
 
 /**
  * @brief Cut off the first amount characters from the view
@@ -83,7 +99,7 @@ int sv_compare(const string_view a, const string_view b);
  * @param str Null-terminated source string (not copied)
  * @return View over str with size = strlen(str)
  */
-string_view sv_string_to_string_view(char* str);
+string_view sv_string_to_string_view(const char* str);
 
 /**
  * @brief Extract sub-view by byte range [start, end)
@@ -106,11 +122,52 @@ string_view sv_substring(const string_view sv, size_t start, size_t end);
 bool sv_copy(const string_view sv, char* dest, size_t size);
 
 /** @brief printf format specifier for string_view */
-#define SV_FMT "%.*s"
-/** @brief Expand string_view for use with SV_FMT */
+#define SV_PRINT_FMT "%.*s"
+/** @brief Expand string_view for use with SV_PRINT_FMT */
 #define SV_PRINT(sv) (int)(sv).size, (sv).data
 
+/**
+ * @brief Find the first occurrence of the substring `s` in the string view `sv`
+ *
+ * @param sv The string view to search within
+ * @param s The substring to search for
+ * @return The index of the first occurrence of `s` in `sv`, or -1 if not found
+ */
+ssize_t sv_find(const string_view sv, const string_view s);
+
+/* This is the string version of sv_find, taking a C string instead of a string_view */
+ssize_t sv_find_s(const string_view sv, const char* s);
+
 #ifdef STRING_VIEW_IMPLEMENTATION
+string_view sv_chop_left(const string_view sv) {
+    string_view ret = sv;
+    while (ret.size != 0 && (*ret.data == ' ' || *ret.data == '\t')) {
+        ret.data++;
+        ret.size--;
+    }
+    return ret;
+}
+string_view sv_chop_right(const string_view sv) {
+    string_view ret = sv;
+    while (ret.size != 0 && (ret.data[ret.size - 1] == ' ' || ret.data[ret.size - 1] == '\t' ||
+                             ret.data[ret.size - 1] == '\n')) {
+        ret.size--;
+    }
+    return ret;
+}
+
+string_view sv_get_line(const string_view sv) {
+    if (sv.size == 0) {
+        return sv;
+    }
+    for (size_t i = 0; i < sv.size; ++i) {
+        if (sv.data[i] == '\n') {
+            return (string_view){i, sv.data};
+        }
+    }
+    return sv;
+}
+
 string_view sv_trim_left(const string_view sv, size_t amount) {
     if (sv.size < amount) {
         return (string_view){0};
@@ -147,7 +204,9 @@ int sv_compare(const string_view a, const string_view b) {
     return 0;
 }
 
-string_view sv_string_to_string_view(char* str) { return (string_view){.size = strlen(str), .data = str}; }
+string_view sv_string_to_string_view(const char* str) {
+    return (string_view){.size = strlen(str), .data = str};
+}
 
 string_view sv_substring(const string_view sv, size_t start, size_t end) {
     if (end > sv.size || start >= end) {
@@ -165,6 +224,30 @@ bool sv_copy(const string_view sv, char* dest, size_t size) {
 
     return true;
 }
+
+ssize_t sv_find(const string_view sv, const string_view s) {
+    if (sv.size < s.size) return -1;
+    for (size_t i = 0; i <= sv.size - s.size; ++i) {
+        bool found = true;
+
+        for (size_t j = 0; j < s.size; ++j) {
+            if (sv.data[i + j] == s.data[j]) {
+                continue;
+            } else {
+                found = false;
+            }
+        }
+        if (found) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+ssize_t sv_find_s(const string_view sv, const char* s) {
+    return sv_find(sv, sv_string_to_string_view(s));
+}
+
 #endif  // STRING_VIEW_IMPLEMENTATION
 
 #endif  // STRING_VIEW_H
